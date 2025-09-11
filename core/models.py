@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.utils import timezone
 from datetime import timedelta
+from cloudinary.models import CloudinaryField
 
 from futaverse.utils.generate import generate_otp
 
@@ -15,18 +16,25 @@ class User(AbstractBaseUser):
         STAFF = 'Staff', 'staff'
         ADMIN = 'admin', 'Admin'
         
+    class Gender(models.TextChoices):
+        MALE = 'Male', 'male'
+        FEMALE = 'Female', 'female'
+        OTHER = 'Other', 'other'
+        UNKNOWN = 'Unknown', 'unknown'
+        
     email = models.EmailField(unique=True, blank=True, null=True)
     phone_num = models.CharField()
-    role = models.CharField(max_length=20, choices=Role.choices, default=Role.MENTEE)
+    role = models.CharField(max_length=20, choices=Role.choices)
+    gender = models.CharField(choices=Gender.choices)
         
     firstname = models.CharField(max_length=100)
     lastname = models.CharField(max_length=100)
     middlename = models.CharField(max_length=100, blank=True)
     
-    street = models.CharField(max_length=120, blank=True, null=True)
-    city = models.CharField(max_length=20, blank=True, null=True)
-    state = models.CharField(max_length=20, blank=True, null=True)
-    country = models.CharField(max_length=20, blank=True, null=True)
+    street = models.CharField(max_length=120)
+    city = models.CharField(max_length=20)
+    state = models.CharField(max_length=20)
+    country = models.CharField(max_length=20)
     
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
@@ -35,6 +43,13 @@ class User(AbstractBaseUser):
     updated_at = models.DateTimeField(auto_now=True)
     
     USERNAME_FIELD = 'email'
+    
+    def get_profile(self, type_):
+        if type_ == 'mentor':
+            return getattr(self, 'mentor_profile', None)
+        elif type_ == 'mentee':
+            return getattr(self, 'mentee_profile', None)
+        return None
     
     def __str__(self):
         return f"{self.email} ({self.role})"
@@ -80,3 +95,8 @@ class OTP(models.Model):
     
     def __str__(self):
         return self.otp
+    
+class UserProfileImage(models.Model):
+    user = models.ForeignKey(User, related_name="profile_img", on_delete=models.CASCADE, null=True, blank=True)
+    file = CloudinaryField("profile_images/") 
+    uploaded_at = models.DateTimeField(auto_now_add=True)
