@@ -11,8 +11,8 @@ def default_expiry():
 
 class User(AbstractBaseUser):
     class Role(models.TextChoices):
-        MENTOR = 'Mentor', 'mentor'
-        MENTEE = 'Mentee', 'mentee'
+        ALUMNI = 'Alumni', 'alumni'
+        STUDENT = 'Student', 'student'
         STAFF = 'Staff', 'staff'
         ADMIN = 'admin', 'Admin'
         

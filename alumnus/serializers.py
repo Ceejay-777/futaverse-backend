@@ -1,17 +1,17 @@
 from rest_framework import serializers
 
-from .models import MentorProfile
+from .models import AlumniProfile
 from core.models import User, UserProfileImage
 
-class MentorProfileSerializer(serializers.ModelSerializer):
+class AlumniProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
-        model = MentorProfile
+        model = AlumniProfile
         fields = '__all__'
         exclude = ['user']
 
-class MentorSerializer(serializers.ModelSerializer):
-    profile = MentorProfileSerializer(required=True)
+class AlumniSerializer(serializers.ModelSerializer):
+    profile = AlumniProfileSerializer(required=True)
     house_no = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=10)
     profile_img = serializers.PrimaryKeyRelatedField(queryset=UserProfileImage.objects.all(), required=False)
     previous_comps = serializers.ListField(child=serializers.CharField(), required=False)
@@ -31,7 +31,9 @@ class MentorSerializer(serializers.ModelSerializer):
             validated_data['street'] = f'{house_no}, {validated_data['street']}'
             
         user = super().create(validated_data)
-        MentorProfile.objects.create(user=user, **profile_data)
+        
+        AlumniProfile.objects.create(user=user, **profile_data)
+        
         if profile_img:
             profile_img.user = user
             profile_img.save()

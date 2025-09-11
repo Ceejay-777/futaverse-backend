@@ -1,8 +1,8 @@
 from django.db import models
 from core.models import User
 
-class MentorProfile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="mentor_profile")
+class AlumniProfile(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="alumni_profile")
     
     description = models.TextField(blank=True, null=True)
     
