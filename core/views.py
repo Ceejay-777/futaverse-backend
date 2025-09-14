@@ -14,12 +14,11 @@ class UploadUserProfileImageView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        saved_image = serializer.save()
+        serializer.save()
         
-        print("Saved image:", saved_image.image)
-        print("Image URL:", saved_image.image.url if saved_image.image else None)
+        print(serializer.data)
+        # image_id = serializer.data.get('id')
         
-        data = serializer.data
-        
-        return Response(data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     
