@@ -15,7 +15,7 @@ class AlumniProfile(models.Model):
     current_company = models.CharField()
     industry = models.CharField()
     years_of_exp = models.IntegerField()
-    previous_comps = models.JSONField(default=list, blank=True, name=True)
+    previous_comps = models.JSONField(default=list, blank=True, null=True)
     
     linkedin_url = models.URLField(blank=True, null=True, max_length=200)
     github_url = models.URLField(blank=True, null=True, max_length=200)

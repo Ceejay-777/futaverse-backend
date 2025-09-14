@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils import timezone
 from datetime import timedelta
 from cloudinary.models import CloudinaryField
@@ -8,6 +8,27 @@ from futaverse.utils.generate import generate_otp
 
 def default_expiry():
     return timezone.now() + timedelta(minutes=10)
+
+class UserManager(BaseUserManager):
+    def create(self, **extra_fields):
+        email = extra_fields.get("email")
+        password = extra_fields.pop("password", None)
+        
+        email = self.normalize_email(email)
+        user = self.model(**extra_fields)
+        if password:
+            user.set_password(password)
+            
+        user.save(using=self._db)
+
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("role", User.Role.ADMIN)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser):
     class Role(models.TextChoices):
@@ -43,6 +64,8 @@ class User(AbstractBaseUser):
     updated_at = models.DateTimeField(auto_now=True)
     
     USERNAME_FIELD = 'email'
+    
+    objects = UserManager()
     
     def get_profile(self, type_):
         if type_ == 'alumni':
