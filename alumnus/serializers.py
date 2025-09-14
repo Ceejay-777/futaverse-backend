@@ -18,7 +18,7 @@ class AlumniSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = '__all__'
+        # fields = '__all__'
         exclude = ['is_active', 'is_staff', 'role']
         read_only_fields = ['id', 'created_at', 'updated_at']
         

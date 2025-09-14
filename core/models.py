@@ -45,10 +45,10 @@ class User(AbstractBaseUser):
     USERNAME_FIELD = 'email'
     
     def get_profile(self, type_):
-        if type_ == 'mentor':
-            return getattr(self, 'mentor_profile', None)
-        elif type_ == 'mentee':
-            return getattr(self, 'mentee_profile', None)
+        if type_ == 'alumni':
+            return getattr(self, 'alumni_profile', None)
+        elif type_ == 'student':
+            return getattr(self, 'student_profile', None)
         return None
     
     def __str__(self):
@@ -98,5 +98,5 @@ class OTP(models.Model):
     
 class UserProfileImage(models.Model):
     user = models.ForeignKey(User, related_name="profile_img", on_delete=models.CASCADE, null=True, blank=True)
-    file = CloudinaryField("profile_images/") 
+    image = CloudinaryField("profile_images/") 
     uploaded_at = models.DateTimeField(auto_now_add=True)
