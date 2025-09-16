@@ -1,9 +1,12 @@
-from django.contrib import admin
+# from django.contrib import admin
 from django.urls import path, include
-from core.views import UploadUserProfileImageView
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/profile-img', UploadUserProfileImageView.as_view(), name='upload-profile-image'),
-    # path('alumni', include('alumnus.urls'))
+     path('', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('api/raw', SpectacularAPIView.as_view(), name='schema'),
+    path('api/swagger-ui', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    # path('admin/', admin.site.urls),
+    # path('alumni', include('alumnus.urls')),
+    path('api/auth', include('core.urls'))
 ]

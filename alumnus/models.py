@@ -2,14 +2,14 @@ from django.db import models
 from core.models import User
 
 class AlumniProfile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="alumni_profile")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="alumni_profile")
     
     description = models.TextField(blank=True, null=True)
     
-    matric_no = models.CharField(max_length=10)
+    matric_no = models.CharField(max_length=15)
     department = models.CharField(max_length=30)
     faculty = models.CharField(max_length=20)
-    grad_year = models.CharField(max_length=5)
+    grad_year = models.CharField(max_length=4)
     
     current_job_title = models.CharField()
     current_company = models.CharField()

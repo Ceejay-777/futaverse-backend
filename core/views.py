@@ -14,9 +14,9 @@ from .models import User, UserProfileImage
 from .models import User, OTP
 from .serializers import UserProfileImageSerializer
 
-from futaverse.views import PublicGenericAPIView
+from alumnus.serializers import CreateAlumnusSerializer
 
-from .serializers import CreateAlumnusSerializer
+from futaverse.views import PublicGenericAPIView
 
 def set_refresh_cookie(response):
     data = response.data
@@ -35,7 +35,7 @@ def set_refresh_cookie(response):
             
     return response
 
-class UploadUserProfileImageView(generics.CreateAPIView):
+class UploadUserProfileImageView(generics.CreateAPIView, PublicGenericAPIView):
     queryset = UserProfileImage.objects.all()
     serializer_class = UserProfileImageSerializer
     parser_classes = [MultiPartParser, FormParser]
@@ -47,7 +47,7 @@ class UploadUserProfileImageView(generics.CreateAPIView):
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-class CreateUserView(generics.CreateAPIView, PublicGenericAPIView):
+class CreateAlumnusView(generics.CreateAPIView, PublicGenericAPIView):
     serializer_class = CreateAlumnusSerializer
     
     def post(self, request, *args, **kwargs):
@@ -69,8 +69,8 @@ class CreateUserView(generics.CreateAPIView, PublicGenericAPIView):
                 f"Enter the OTP below into the required field \n"
                 f"The OTP will expire in 10 mins\n\n"
                 f"OTP: {otp}\n\n"
-                f"If you did not initiate this request, please contact support@docuhealthservices.com\n\n"
-                f"From the Docuhealth Team"
+                f"If you did not initiate this request, please contact .................com\n\n"
+                f"From the FutaVerse Team"
             ),
             recipient_list=[user.email],
             from_email=None,

@@ -120,6 +120,6 @@ class OTP(models.Model):
         return self.otp
     
 class UserProfileImage(models.Model):
-    user = models.ForeignKey(User, related_name="profile_img", on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, related_name="profile_img", on_delete=models.SET_NULL, null=True, blank=True)
     image = CloudinaryField("profile_images/") 
     uploaded_at = models.DateTimeField(auto_now_add=True)

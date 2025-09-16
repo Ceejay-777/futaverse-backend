@@ -75,7 +75,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'futaverse.wsgi.application'
 
-DATABASES = {'default': dj_database_url.config(default=os.environ['DATABASE_URL'], engine='django_cockroachdb')}
+# DATABASES = {'default': dj_database_url.config(default=os.environ['DATABASE_URL'], ssl_require=True)}
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': os.environ['DB_USER'],
+        'PASSWORD': os.environ['DB_PASSWORD'],
+        'HOST': 'aws-1-eu-west-1.pooler.supabase.com',
+        'PORT': '6543',
+        'OPTIONS': {
+            'sslmode': 'verify-full',
+            'sslrootcert': r'C:/Users/coven/OneDrive/Desktop/Code/FutaVerse/root.crt',
+        }
+    }
+}
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -136,16 +152,16 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = "smtp.gmail.com"
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_USE_SSL = False
-# EMAIL_HOST_USER = os.environ.get("MAIL_USERNAME")         
-# EMAIL_HOST_PASSWORD = os.environ.get("MAIL_PASSWORD") 
-# DEFAULT_FROM_EMAIL = "Futaverse Support"
-# SERVER_EMAIL = DEFAULT_FROM_EMAIL        
-# EMAIL_TIMEOUT = 20  
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = os.environ.get("MAIL_USERNAME")         
+EMAIL_HOST_PASSWORD = os.environ.get("MAIL_PASSWORD") 
+DEFAULT_FROM_EMAIL = "Futaverse Support"
+SERVER_EMAIL = DEFAULT_FROM_EMAIL        
+EMAIL_TIMEOUT = 20  
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
