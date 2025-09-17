@@ -142,7 +142,7 @@ SIMPLE_JWT = {
     "SIGNING_KEY": os.environ.get("DJANGO_SECRET_KEY"),
     "ALGORITHM": "HS256",
     "TOKEN_BLACKLIST_ENABLED": True,
-    "TOKEN_OBTAIN_SERIALIZER": "core.serializers.CustomTokenObtainPairSerializer",
+    # "TOKEN_OBTAIN_SERIALIZER": "core.serializers.CustomTokenObtainPairSerializer",
 }
 
 SPECTACULAR_SETTINGS = {

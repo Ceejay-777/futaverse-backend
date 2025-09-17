@@ -1,33 +1,75 @@
 from rest_framework import serializers
-from .models import UserProfileImage, User
-from alumnus.serializers import AlumniProfileSerializer
-from alumnus.models import AlumniProfile
+from .models import UserProfileImage, User, OTP
+# from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class UserProfileImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfileImage
         fields = ['id', 'image']
         
-class CreateAlumnusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        exclude = ['last_login', 'is_staff', 'is_active']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    otp = serializers.CharField(required=True, write_only=True, min_length=6, max_length=6)
+    
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        email = validated_data.get("email")
+        otp = validated_data.get("otp")
         
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
-    alumni_profile = AlumniProfileSerializer(required=True, source='alumni_profile')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "User with the provided email not found"})
         
-    def create(self, validated_data):
-        profile_data = validated_data.pop('alumni_profile')
-        role = validated_data.get('role')
-        
-        house_no = profile_data.pop('house_no', None)
-        if house_no:
-            validated_data['street'] = f'{house_no}, {validated_data['street']}'
+        try:
+            otp_instance = user.otp
+        except OTP.DoesNotExist:
+           raise serializers.ValidationError({"otp": "No OTP found"})
 
-        user = super().create(validated_data) 
+        self.user = user
+        self.otp_instance = otp_instance
+        self.otp = otp
+        
+        return validated_data
+    
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        email = validated_data.get("email")
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "Invalid email"})
+        
+        self.user = user
+        self.email = email
+        
+        return validated_data
+    
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    otp = serializers.CharField(required=True, write_only=True, min_length=6, max_length=6)
+    
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        email = validated_data.get("email")
+        otp = validated_data.get("otp")
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "Invalid email"})
+        
+        try:
+            otp_instance = user.otp
+        except OTP.DoesNotExist:
+           raise serializers.ValidationError({"otp": "No OTP found"})
 
-        if role == User.Role.ALUMNI:
-            AlumniProfile.objects.create(user=user, **profile_data)
-            
-        return user
+        self.user = user
+        self.otp_instance = otp_instance
+        self.otp = otp
+        
+        return validated_data
