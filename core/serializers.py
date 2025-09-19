@@ -73,3 +73,6 @@ class VerifyOTPSerializer(serializers.Serializer):
         self.otp = otp
         
         return validated_data
+    
+class ResetPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, required=True, min_length=8)

@@ -10,9 +10,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.generics import GenericAPIView
 
-from .models import User, UserProfileImage
-from .models import User, OTP
-from .serializers import UserProfileImageSerializer, VerifyOTPSerializer, ForgotPasswordSerializer
+from .models import User, OTP, UserProfileImage
+from .serializers import UserProfileImageSerializer, VerifyOTPSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
 
 from futaverse.views import PublicGenericAPIView
 
@@ -134,35 +133,21 @@ class VerifyForgotPasswordOTPView(PublicGenericAPIView):
 
         return response
     
-# class ResetPasswordView(GenericAPIView):
-#     serializer_class = ResetPasswordSerializer
+class ResetPasswordView(GenericAPIView):
+    serializer_class = ResetPasswordSerializer
     
-#     def patch(self, request):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
+    def patch(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         
-#         new_password = serializer.validated_data["new_password"]
+        new_password = serializer.validated_data["new_password"]
 
-#         user = request.user
-#         user.set_password(new_password)
-#         user.save()
+        user = request.user
+        user.set_password(new_password)
+        user.save()
 
-#         return Response({"detail": "Password reset successfully. Please log in with your new credentials.", "status": "success"}, status=200)
+        return Response({"detail": "Password reset successfully. Please log in with your new credentials.", "status": "success"}, status=200)
     
-# class CustomTokenRefreshView(TokenRefreshView):
-#     def post(self, request, *args, **kwargs):
-#         refresh_token = request.COOKIES.get("refresh_token")
-        
-#         if not refresh_token:
-#             return Response({"detail": "Please login again"}, status=400)
-
-#         request.data["refresh"] = refresh_token
-#         response = super().post(request, *args, **kwargs)
-        
-#         if response.status_code == status.HTTP_200_OK:
-#             set_refresh_cookie(response)
-        
-#         return response
     
 
 

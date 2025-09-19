@@ -3,13 +3,12 @@ from django.core.mail import send_mail
 from rest_framework import generics
 
 from core.models import User, OTP
-from .serializers import CreateAlumnusSerializer
+from .serializers import CreateStudentSerializer
 
-from alumnus.serializers import CreateAlumnusSerializer
 from futaverse.views import PublicGenericAPIView
 
-class CreateAlumnusView(generics.CreateAPIView, PublicGenericAPIView):
-    serializer_class = CreateAlumnusSerializer
+class CreateStudentView(generics.CreateAPIView, PublicGenericAPIView):
+    serializer_class = CreateStudentSerializer
     
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
