@@ -76,7 +76,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'futaverse.wsgi.application'
 
-# DATABASES = {'default': dj_database_url.config(default=os.environ['DATABASE_URL'], ssl_require=True)}
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.environ['DATABASE_URL'], 
+#         ssl_require=True)
+#     }
 
 DATABASES = {
     'default': {
@@ -88,7 +92,7 @@ DATABASES = {
         'PORT': '6543',
         'OPTIONS': {
             'sslmode': 'verify-full',
-            'sslrootcert': r'C:/Users/coven/OneDrive/Desktop/Code/FutaVerse/root.crt',
+            'sslrootcert': os.path.join(BASE_DIR, 'root.crt'),
         }
     }
 }

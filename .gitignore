@@ -6,7 +6,7 @@ venv/
 __pycache__/
 *.py[cod]
 
-# SQLite DB (if using)
+# SQLite DB 
 db.sqlite3
 
 # Django stuff
