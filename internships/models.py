@@ -2,8 +2,9 @@ from django.db import models
 from alumnus.models import AlumniProfile
 from students.models import StudentProfile
 from cloudinary.models import CloudinaryField
+from futaverse.models import BaseModel
 
-class Internship(models.Model):
+class Internship(BaseModel, models.Model):
     class WorkMode(models.TextChoices):
         REMOTE = 'Remote', 'Remote'
         HYBRID = 'Hybrid', 'Hybrid'
@@ -35,6 +36,10 @@ class Internship(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def toggle_active(self):
+        self.is_active = not self.is_active
+        self.save(update_fields=['is_active'])
 
     def __str__(self):
         return f"{self.title} (internship)"
@@ -56,6 +61,7 @@ class InternshipApplication(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
 
     class Meta:
         unique_together = ('internship', 'student')
@@ -113,6 +119,7 @@ class InternshipEngagement(models.Model):
         
     @property
     def is_active(self):
+        
         return self.status == self.EngagementStatus.ACTIVE
 
     def __str__(self):

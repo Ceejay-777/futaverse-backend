@@ -1,11 +1,10 @@
 from django.urls import path
-from .views import UploadUserProfileImageView, VerifySignupOTPView, LoginView, TokenRefreshView, ForgotPasswordView, VerifyForgotPasswordOTPView, ResetPasswordView
+from .views import VerifySignupOTPView, LoginView, TokenRefreshView, ForgotPasswordView, VerifyForgotPasswordOTPView, ResetPasswordView
 from alumnus.views import CreateAlumnusView
 from students.views import CreateStudentView
 
 
 urlpatterns = [
-    path('/profile-img', UploadUserProfileImageView.as_view(), name='upload-profile-image'),
     path('/signup/alumnus', CreateAlumnusView.as_view(), name='create-alumnus'),
     path('/signup/student', CreateStudentView.as_view(), name='create-student'),
     path('/signup/verify-otp', VerifySignupOTPView.as_view(), name='verify-signup-otp'),

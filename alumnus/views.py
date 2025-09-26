@@ -1,6 +1,7 @@
 from django.core.mail import send_mail
 
 from rest_framework import generics
+from drf_spectacular.utils import extend_schema
 
 from core.models import User, OTP
 from .serializers import CreateAlumnusSerializer
@@ -8,6 +9,7 @@ from .serializers import CreateAlumnusSerializer
 from alumnus.serializers import CreateAlumnusSerializer
 from futaverse.views import PublicGenericAPIView
 
+@extend_schema(tags=['Auth'])
 class CreateAlumnusView(generics.CreateAPIView, PublicGenericAPIView):
     serializer_class = CreateAlumnusSerializer
     
