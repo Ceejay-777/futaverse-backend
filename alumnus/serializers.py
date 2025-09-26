@@ -13,7 +13,6 @@ class AlumniProfileSerializer(serializers.ModelSerializer):
 
 class CreateAlumnusSerializer(serializers.ModelSerializer):
     profile = AlumniProfileSerializer(required=True, source='alumni_profile')
-    house_no = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=10)
     password = serializers.CharField(write_only=True, required=True, min_length=8)
     
     class Meta:
@@ -25,11 +24,7 @@ class CreateAlumnusSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         profile_data = validated_data.pop('alumni_profile')
         profile_img = profile_data.pop('profile_img', None)
-        house_no = validated_data.pop('house_no', None)
         
-        if house_no:
-            validated_data['street'] = f'{house_no}, {validated_data['street']}'
-            
         user = super().create(validated_data)
         AlumniProfile.objects.create(user=user, **profile_data)
         
