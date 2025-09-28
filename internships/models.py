@@ -3,6 +3,26 @@ from alumnus.models import AlumniProfile
 from students.models import StudentProfile
 from cloudinary.models import CloudinaryField
 from futaverse.models import BaseModel
+import cloudinary.utils
+
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
+from django_storage_supabase.supabase import SupabaseStorage
+from futaverse.storage import SupabaseStorage as CustomSupabaseStorage
+
+class CustomPublicStorage(RawMediaCloudinaryStorage):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ensure files are uploaded as public
+        self.options = {
+            'resource_type': 'raw',
+            'type': 'upload',  # This makes it public by default
+        }
+
+class InternshipStatus(models.TextChoices):
+        PENDING = 'Pending', 'pending'
+        ACCEPTED = 'Accepted', 'accepted'
+        REJECTED = 'Rejected', 'rejected'
+        WITHDRAWN = 'Withdrawn', 'withdrawn'
 
 class Internship(BaseModel, models.Model):
     class WorkMode(models.TextChoices):
@@ -45,18 +65,12 @@ class Internship(BaseModel, models.Model):
         return f"{self.title} (internship)"
     
 class InternshipApplication(models.Model):
-    class ApplicationStatus(models.TextChoices):
-        PENDING = 'Pending', 'pending'
-        ACCEPTED = 'Accepted', 'accepted'
-        REJECTED = 'Rejected', 'rejected'
-        WITHDRAWN = 'Withdrawn', 'withdrawn'
-        
     internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='applications')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internship_applications')
     
-    resume = CloudinaryField('resumes/', blank=True, null=True)
+    # resume = CloudinaryField('resumes/', blank=True, null=True)
     cover_letter = models.TextField(blank=True, null=True)
-    status = models.CharField(choices=ApplicationStatus.choices, max_length=20, default=ApplicationStatus.PENDING)
+    status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
     responded_at = models.DateTimeField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -73,7 +87,7 @@ class InternshipOffer(models.Model):
     internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='offers')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internship_offers')
     
-    accepted = models.BooleanField(default=False)
+    status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
     responded_at = models.DateTimeField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -81,6 +95,18 @@ class InternshipOffer(models.Model):
     
     class Meta:
         unique_together = ("internship", "student")
+        
+    def withdraw(self):
+        self.status = InternshipStatus.WITHDRAWN
+        self.save(update_fields=['status'])
+        
+    def accept(self):
+        self.status = InternshipStatus.ACCEPTED
+        self.save(update_fields=['status'])
+        
+    def reject(self):
+        self.status = InternshipStatus.REJECTED
+        self.save(update_fields=['status'])
 
     def __str__(self):
         return f"Offer to {self.student.full_name} for {self.internship.title}"
@@ -124,3 +150,12 @@ class InternshipEngagement(models.Model):
 
     def __str__(self):
         return f"Engagement of {self.student.full_name} in {self.internship.title}"
+    
+    
+class InternResume(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
+    resume = models.FileField(upload_to='resumes/', storage=CustomSupabaseStorage())
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Resume of {self.student.full_name} uploaded at {self.uploaded_at}"
