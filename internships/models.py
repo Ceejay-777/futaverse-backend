@@ -6,8 +6,8 @@ from futaverse.models import BaseModel
 import cloudinary.utils
 
 from cloudinary_storage.storage import RawMediaCloudinaryStorage
-from django_storage_supabase.supabase import SupabaseStorage
-from futaverse.storage import SupabaseStorage as CustomSupabaseStorage
+# from django_storage_supabase.supabase import SupabaseStorage
+# from futaverse.storage import SupabaseStorage as CustomSupabaseStorage
 
 class CustomPublicStorage(RawMediaCloudinaryStorage):
     def __init__(self, *args, **kwargs):
@@ -154,7 +154,7 @@ class InternshipEngagement(models.Model):
     
 class InternResume(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
-    resume = models.FileField(upload_to='resumes/', storage=CustomSupabaseStorage())
+    resume = models.FileField(upload_to='resumes/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

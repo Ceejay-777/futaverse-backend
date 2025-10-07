@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_spectacular',
     "corsheaders",
-    "structured",
     
     'core',
     'alumnus',
@@ -190,10 +189,10 @@ CLOUDINARY_STORAGE = {
 }
 
 # MEDIA_URL = '/media/'  
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3.S3Storage'
 
-# SUPABASE_API_KEY = os.environ.get('SUPABASE_API_KEY')
-# SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
 # SUPABASE_ROOT_PATH = '/futaverse-media/'
 
 AWS_ACCESS_KEY_ID = os.getenv('SUPABASE_ACCESS_KEY_ID')
