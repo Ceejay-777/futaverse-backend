@@ -52,8 +52,7 @@ class User(AbstractBaseUser):
     lastname = models.CharField(max_length=100)
     middlename = models.CharField(max_length=100, blank=True)
     
-    street = models.CharField(max_length=120)
-    city = models.CharField(max_length=20)
+    address = models.CharField(max_length=255)
     state = models.CharField(max_length=20)
     country = models.CharField(max_length=20)
     

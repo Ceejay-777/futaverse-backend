@@ -33,3 +33,10 @@ class StudentProfile(models.Model):
     instagram_url = models.URLField(blank=True, null=True, max_length=200)
     facebook_url = models.URLField(blank=True, null=True, max_length=200)
     
+    @property
+    def full_name(self):
+        return f"{self.user.firstname} {self.user.lastname}"
+    
+    def __str__(self):
+        return f"{self.full_name} (student)"
+    
