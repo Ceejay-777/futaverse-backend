@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-1&^(s=j&v^w$2o6^g-8nv@z!l)0!9cmt^be4jn5!oo$gcw89rq
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["futaverse-backend-1.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["futaverse-backend.onrender.com", "localhost", "127.0.0.1"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
