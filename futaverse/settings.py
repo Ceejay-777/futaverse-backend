@@ -1,8 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
-import dj_database_url
-from  dotenv import load_dotenv
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -68,12 +67,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'futaverse.wsgi.application'
-
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=os.environ['DATABASE_URL'], 
-#         ssl_require=True)
-#     }
 
 DATABASES = {
     'default': {
