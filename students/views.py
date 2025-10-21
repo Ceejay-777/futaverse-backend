@@ -1,13 +1,16 @@
-from django.core.mail import send_mail
-
-from rest_framework import generics
+from rest_framework import generics, status
 from drf_spectacular.utils import extend_schema
 
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+
 from core.models import User, OTP
-from .serializers import CreateStudentSerializer
+from .serializers import CreateStudentSerializer, ResumeSerializer
+from .models import StudentResume
 
 from futaverse.views import PublicGenericAPIView
 from futaverse.utils.email_service import BrevoEmailService
+from futaverse.extensions import upload_resume
 
 mailer = BrevoEmailService()
 
@@ -39,3 +42,24 @@ class CreateStudentView(generics.CreateAPIView, PublicGenericAPIView):
             ),
             recipient=user.email,
         )
+        
+@extend_schema(tags=['Students'])
+class UploadResumeView(generics.CreateAPIView):
+    queryset = StudentResume.objects.all()
+    serializer_class = ResumeSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        resume = request.FILES.get('resume')
+        
+        if not resume:
+            return Response({"detail": "Resume not provided", "status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        public_url = upload_resume(resume, user.student_profile.id)
+        
+        serializer = self.get_serializer(data={"resume": public_url, "student": user.student_profile.id, "filename": resume.name})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from .models import Internship, InternshipApplication, InternshipOffer, InternshipEngagement, InternResume
-from students.models import StudentProfile
+from .models import Internship, InternshipApplication, InternshipOffer, InternshipEngagement
+from students.models import StudentProfile, StudentResume
 from alumnus.models import AlumniProfile
 
 from futaverse.serializers import StrictFieldsMixin
@@ -44,18 +44,32 @@ class CreateInternshipOfferSerializer(serializers.ModelSerializer):
         
         return  internship
     
-class ResumeSerializer(serializers.ModelSerializer):
+class InternshipApplicationSerializer(serializers.ModelSerializer):
+    internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
+    
     class Meta:
-        model = InternResume
-        fields = '__all__'
-    
-#     internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
-#     student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
-    
-#     class Meta:
-#         model = InternshipApplication
-#         fields = ['internship', 'student', 'id']
-#         read_only_fields = ['id', 'created_at', 'updated_at']
+        model = InternshipApplication
+        fields = ['internship', 'id', 'cover_letter']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+        
+    def create(self, validated_data):
+        internship = validated_data['internship']
+        student = validated_data['student']
+        
+        if InternshipApplication.objects.filter(internship=internship, student=student).exists():
+            raise serializers.ValidationError({"detail": "You have already applied for this internship."})
+
+        if internship.require_resume:
+            resume = getattr(student, 'resume', None)
+            if not resume:
+                raise serializers.ValidationError({
+                    "resume": "This internship requires a resume, but none was found. Please upload one first."
+                })
+            validated_data['resume'] = resume
+
+        return super().create(validated_data)
+        
+   
 
 
         

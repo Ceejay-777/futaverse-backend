@@ -1,5 +1,3 @@
-from django.core.mail import send_mail
-
 from rest_framework import generics
 from drf_spectacular.utils import extend_schema
 
@@ -8,6 +6,9 @@ from .serializers import CreateAlumnusSerializer
 
 from alumnus.serializers import CreateAlumnusSerializer
 from futaverse.views import PublicGenericAPIView
+from futaverse.utils.email_service import BrevoEmailService
+
+mailer = BrevoEmailService()
 
 @extend_schema(tags=['Auth'])
 class CreateAlumnusView(generics.CreateAPIView, PublicGenericAPIView):
@@ -26,15 +27,14 @@ class CreateAlumnusView(generics.CreateAPIView, PublicGenericAPIView):
         user = serializer.save()
         otp = OTP.generate_otp(user)
         
-        send_mail(
+        mailer.send(
             subject="Verify your email",
-            message=(
+            body=(
                 f"Enter the OTP below into the required field \n"
                 f"The OTP will expire in 10 mins\n\n"
                 f"OTP: {otp}\n\n"
                 f"If you did not initiate this request, please contact .................com\n\n"
                 f"From the FutaVerse Team"
             ),
-            recipient_list=[user.email],
-            from_email=None,
+            recipient=user.email,
         )

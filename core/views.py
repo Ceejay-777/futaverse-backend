@@ -1,5 +1,3 @@
-from django.core.mail import send_mail
-
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
@@ -16,6 +14,9 @@ from .models import User, OTP, UserProfileImage
 from .serializers import UserProfileImageSerializer, VerifyOTPSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
 
 from futaverse.views import PublicGenericAPIView
+from futaverse.utils.email_service import BrevoEmailService
+
+mailer = BrevoEmailService()
 
 def set_refresh_cookie(response):
     data = response.data
@@ -40,13 +41,6 @@ class UploadUserProfileImageView(generics.CreateAPIView, PublicGenericAPIView):
     serializer_class = UserProfileImageSerializer
     parser_classes = [MultiPartParser, FormParser]
     
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
 @extend_schema(tags=['Auth'])
 class VerifySignupOTPView(PublicGenericAPIView):  
     serializer_class = VerifyOTPSerializer
@@ -69,11 +63,10 @@ class LoginView(TokenObtainPairView, PublicGenericAPIView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         
-        send_mail(
+        mailer.send(
             subject="New Login Alert",
-            message= "There was a login attempt on your FutaVerse account. If this was you, you can ignore this message. \n\nIf this was not you, please contact our support team at ....................com \n\n\nFrom the Docuhealth Team",
-            from_email=None,
-            recipient_list=[request.data.get("email")],         
+            body = "There was a login attempt on your FutaVerse account. If this was you, you can ignore this message. \n\nIf this was not you, please contact our support team at ....................com \n\n\nFrom the Docuhealth Team",
+            recipient=request.data.get("email"),         
         )
         
         if response.status_code == status.HTTP_200_OK:
@@ -108,16 +101,16 @@ class ForgotPasswordView(PublicGenericAPIView):
         otp = OTP.generate_otp(serializer.user)
         print(otp)
         
-        send_mail(
+        mailer.send(
             subject="Account Recovery",
-            message= (
+            body= (
                         f"Enter the OTP below into the required field \n"
                         f"The OTP will expire in 10 mins\n\n"
                         f"OTP: {otp} \n\n"
                         f"If you did not iniate this request, please contact our support team at ..............com   \n\n\n"
                         f"From the Docuhealth Team"
                     ),
-            recipient_list=[serializer.email],
+            recipient=serializer.email,
             from_email=None,
         )
         

@@ -3,6 +3,8 @@ from rest_framework import serializers
 from .models import StudentProfile
 from core.models import User, UserProfileImage
 
+from .models import StudentResume
+
 class StudentProfileSerializer(serializers.ModelSerializer):
     skills = serializers.ListField(child=serializers.CharField(), required=False)
     profile_img = serializers.PrimaryKeyRelatedField(queryset=UserProfileImage.objects.all(), required=False)
@@ -33,4 +35,10 @@ class CreateStudentSerializer(serializers.ModelSerializer):
             profile_img.save()
         
         return user
+    
+class ResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentResume
+        fields = '__all__'
+
     

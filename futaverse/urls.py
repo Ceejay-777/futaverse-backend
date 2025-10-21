@@ -10,5 +10,6 @@ urlpatterns = [
     
     path('api/profile-img', UploadUserProfileImageView.as_view(), name='upload-profile-image'),
     path('api/auth', include('core.urls')),
-    path('api/internships', include('internships.urls'))
+    path('api/internships', include('internships.urls')),
+    path('api/students', include('students.urls'))
 ]

@@ -40,3 +40,11 @@ class StudentProfile(models.Model):
     def __str__(self):
         return f"{self.full_name} (student)"
     
+class StudentResume(models.Model):
+    student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
+    resume = models.URLField(max_length=200)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Resume of {self.student.full_name} uploaded at {self.uploaded_at}"
+    

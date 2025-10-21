@@ -1,22 +1,7 @@
 from django.db import models
 from alumnus.models import AlumniProfile
-from students.models import StudentProfile
-from cloudinary.models import CloudinaryField
+from students.models import StudentProfile, StudentResume
 from futaverse.models import BaseModel
-import cloudinary.utils
-
-from cloudinary_storage.storage import RawMediaCloudinaryStorage
-# from django_storage_supabase.supabase import SupabaseStorage
-# from futaverse.storage import SupabaseStorage as CustomSupabaseStorage
-
-class CustomPublicStorage(RawMediaCloudinaryStorage):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Ensure files are uploaded as public
-        self.options = {
-            'resource_type': 'raw',
-            'type': 'upload',  # This makes it public by default
-        }
 
 class InternshipStatus(models.TextChoices):
         PENDING = 'Pending', 'pending'
@@ -68,14 +53,13 @@ class InternshipApplication(models.Model):
     internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='applications')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internship_applications')
     
-    # resume = CloudinaryField('resumes/', blank=True, null=True)
+    resume = models.ForeignKey(StudentResume, on_delete=models.SET_NULL, blank=True, null=True)
     cover_letter = models.TextField(blank=True, null=True)
     status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
     responded_at = models.DateTimeField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
 
     class Meta:
         unique_together = ('internship', 'student')
@@ -145,16 +129,8 @@ class InternshipEngagement(models.Model):
         
     @property
     def is_active(self):
-        
         return self.status == self.EngagementStatus.ACTIVE
 
     def __str__(self):
         return f"Engagement of {self.student.full_name} in {self.internship.title}"
     
-class InternResume(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
-    resume = models.URLField(max_length=200)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"Resume of {self.student.full_name} uploaded at {self.uploaded_at}"
