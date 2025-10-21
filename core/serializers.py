@@ -3,9 +3,13 @@ from .models import UserProfileImage, User, OTP
 # from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class UserProfileImageSerializer(serializers.ModelSerializer):
+    url: str = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = UserProfileImage
-        fields = ['id', 'image']
+        fields = ['id', 'image', 'url']
+        
+    def get_url(self, obj):
+        return obj.image.url
         
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)

@@ -151,10 +151,9 @@ class InternshipEngagement(models.Model):
     def __str__(self):
         return f"Engagement of {self.student.full_name} in {self.internship.title}"
     
-    
 class InternResume(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
-    resume = models.FileField(upload_to='resumes/')
+    resume = models.URLField(max_length=200)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

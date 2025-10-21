@@ -45,25 +45,10 @@ class CreateInternshipOfferSerializer(serializers.ModelSerializer):
         return  internship
     
 class ResumeSerializer(serializers.ModelSerializer):
-    # student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all(), write_only=True)
-    img_url = serializers.SerializerMethodField(read_only=True)
-    # signed_url = serializers.SerializerMethodField(read_only=True)
-    
     class Meta:
         model = InternResume
-        fields = ['resume', 'id', 'img_url']
-        
-    def get_img_url(self, obj):
-        if obj.resume:
-            return obj.resume.url
-        return None
+        fields = '__all__'
     
-    # def get_signed_url(self, obj):
-    #     if obj.resume:
-    #         return InternResume.get_signed_resume_url(obj.resume.name)
-    #     return None
-    
-# class InternshipApplicationSerializer(serializers.ModelSerializer):
 #     internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
 #     student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
     

@@ -149,14 +149,13 @@ SPECTACULAR_SETTINGS = {
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
+EMAIL_HOST = "smtp-relay.brevo.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.environ.get("MAIL_USERNAME")         
 EMAIL_HOST_PASSWORD = os.environ.get("MAIL_PASSWORD") 
-DEFAULT_FROM_EMAIL = "Futaverse Support"
-SERVER_EMAIL = DEFAULT_FROM_EMAIL        
+DEFAULT_FROM_EMAIL = "Futaverse Support <covenantcrackslord03@gmail.com>"
+# SERVER_EMAIL = DEFAULT_FROM_EMAIL        
 EMAIL_TIMEOUT = 20  
 
 CORS_ALLOWED_ORIGINS = [
@@ -174,19 +173,10 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET')
 }
 
-# MEDIA_URL = '/media/'  
 DEFAULT_FILE_STORAGE = 'storages.backends.s3.S3Storage'
 
-SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
+SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 # SUPABASE_ROOT_PATH = '/futaverse-media/'
-
-AWS_ACCESS_KEY_ID = os.getenv('SUPABASE_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('SUPABASE_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = 'futaverse-media'
-AWS_S3_ENDPOINT_URL = f"{os.getenv('SUPABASE_URL')}/storage/v1/s3"
-AWS_S3_REGION_NAME = 'eu-west-1'
-AWS_DEFAULT_ACL = 'public-read'
-AWS_S3_CUSTOM_DOMAIN = f"{os.getenv('SUPABASE_URL').replace('https://', '')}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
 
 APPEND_SLASH=False 

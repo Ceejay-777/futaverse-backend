@@ -7,6 +7,9 @@ from core.models import User, OTP
 from .serializers import CreateStudentSerializer
 
 from futaverse.views import PublicGenericAPIView
+from futaverse.utils.email_service import BrevoEmailService
+
+mailer = BrevoEmailService()
 
 @extend_schema(tags=['Auth'])
 class CreateStudentView(generics.CreateAPIView, PublicGenericAPIView):
@@ -25,15 +28,14 @@ class CreateStudentView(generics.CreateAPIView, PublicGenericAPIView):
         user = serializer.save()
         otp = OTP.generate_otp(user)
         
-        send_mail(
+        mailer.send(
             subject="Verify your email",
-            message=(
+            body=(
                 f"Enter the OTP below into the required field \n"
                 f"The OTP will expire in 10 mins\n\n"
                 f"OTP: {otp}\n\n"
                 f"If you did not initiate this request, please contact .................com\n\n"
                 f"From the FutaVerse Team"
             ),
-            recipient_list=[user.email],
-            from_email=None,
+            recipient=user.email,
         )

@@ -8,7 +8,7 @@ urlpatterns = [
     path('api/redoc', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('api/raw', SpectacularAPIView.as_view(), name='schema'),
     
-    path('/profile-img', UploadUserProfileImageView.as_view(), name='upload-profile-image'),
+    path('api/profile-img', UploadUserProfileImageView.as_view(), name='upload-profile-image'),
     path('api/auth', include('core.urls')),
     path('api/internships', include('internships.urls'))
 ]
