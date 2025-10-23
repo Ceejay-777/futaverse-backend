@@ -156,17 +156,18 @@ DEFAULT_FROM_EMAIL = "Futaverse Support <covenantcrackslord03@gmail.com>"
 # SERVER_EMAIL = DEFAULT_FROM_EMAIL        
 EMAIL_TIMEOUT = 20  
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",  
-    "http://127.0.0.1:5174",
-    "http://localhost:3000",  
-    "http://127.0.0.1:3000",
-    "*",
-] 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",  
+#     "http://127.0.0.1:5173",
+#     "http://localhost:5174",  
+#     "http://127.0.0.1:5174",
+#     "http://localhost:3000",  
+#     "http://127.0.0.1:3000",
+#     "*",
+# ] 
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
