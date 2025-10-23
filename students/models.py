@@ -15,15 +15,15 @@ class StudentProfile(models.Model):
     
     matric_no = models.CharField(max_length=15, blank=True, null=True)
     department = models.CharField(max_length=30)
-    faculty = models.CharField(max_length=20)
+    faculty = models.CharField(max_length=60)
     level = models.IntegerField(choices=LevelChoices.choices)
     cgpa = models.DecimalField(max_digits=3, decimal_places=2)
     skills = models.JSONField(default=list)
     expected_grad_year = models.CharField(max_length=4)
     
-    preferred_industry = models.CharField()
-    preferred_company_type = models.CharField()
-    willingness_to_relocate = models.BooleanField()
+    preferred_industry = models.CharField(blank=True, null=True)
+    preferred_company_type = models.CharField(blank=True, null=True)
+    # willingness_to_relocate = models.BooleanField()
     willingness_to_be_mentored = models.BooleanField(default=True)
     
     linkedin_url = models.URLField(blank=True, null=True, max_length=200)
