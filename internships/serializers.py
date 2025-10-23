@@ -20,7 +20,7 @@ class UpdateInternshipSerializer(StrictFieldsMixin, serializers.ModelSerializer)
     
     class Meta:
         model = Internship
-        exclude = ['deleted_at', 'is_deleted', 'alumnus', 'created_at', 'updated_at', 'require_resume', 'require_cover_letter', 'is_active']
+        exclude = ['deleted_at', 'is_deleted', 'alumnus', 'created_at', 'updated_at', 'is_active']
         read_only_fields = ['id']
         
 class InternshipStatusSerializer(serializers.ModelSerializer):
@@ -44,7 +44,7 @@ class CreateInternshipOfferSerializer(serializers.ModelSerializer):
         
         return  internship
     
-class InternshipApplicationSerializer(serializers.ModelSerializer):
+class CreateInternshipApplicationSerializer(serializers.ModelSerializer):
     internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
     
     class Meta:
@@ -68,6 +68,15 @@ class InternshipApplicationSerializer(serializers.ModelSerializer):
             validated_data['resume'] = resume
 
         return super().create(validated_data)
+    
+class InternshipApplicationSerializer(serializers.ModelSerializer):
+    # internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
+    # student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
+    
+    class Meta:
+        model = InternshipApplication
+        fields = "__all__"
+        read_only_fields = ['id', 'created_at', 'updated_at', 'deleted_at', 'is_deleted']
         
    
 

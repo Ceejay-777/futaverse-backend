@@ -2,12 +2,17 @@ from rest_framework import viewsets, permissions, filters, generics, status
 from drf_spectacular.utils import extend_schema
 
 from .models import Internship, InternshipApplication
-from .serializers import InternshipSerializer, UpdateInternshipSerializer, InternshipStatusSerializer, CreateInternshipOfferSerializer, InternshipApplicationSerializer
+from .serializers import InternshipSerializer, UpdateInternshipSerializer, InternshipStatusSerializer, CreateInternshipOfferSerializer, InternshipApplicationSerializer, CreateInternshipApplicationSerializer
+
+from core.models import User
 
 @extend_schema(tags=['Internships'])
-class ListCreateInternshipView(generics.ListCreateAPIView):
-    queryset = Internship.objects.all()
+class ListInternshipView(generics.ListAPIView):
     serializer_class = InternshipSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        return Internship.objects.filter(alumnus=user.alumni_profile).select_related('alumnus')
 
 @extend_schema(tags=['Internships']) 
 class UpdateInternshipView(generics.UpdateAPIView):
@@ -36,10 +41,23 @@ class CreateInternshipOfferView(generics.CreateAPIView):
 @extend_schema(tags=['Internships'])
 class ApplyForInternshipView(generics.CreateAPIView):
     queryset = InternshipApplication.objects.all()
-    serializer_class = InternshipApplicationSerializer
+    serializer_class = CreateInternshipApplicationSerializer
     
     def perform_create(self, serializer):
         student = self.request.user.student_profile
         serializer.save(student=student)
         
     # TODO: Send notification to alumni when an application is submitted 
+    
+@extend_schema(tags=['Internships'])
+class ListInternshipApplicationsView(generics.ListAPIView):
+    serializer_class = InternshipApplicationSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        if user.role == User.Role.ALUMNI:
+            return InternshipApplication.objects.filter(internship__alumnus=user.alumni_profile).select_related('internship', 'student', 'resume')
+        
+        elif user.role == User.Role.STUDENT:
+            return InternshipApplication.objects.filter(student=user.student_profile).select_related('internship', 'resume')
