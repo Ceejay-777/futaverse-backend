@@ -7,7 +7,7 @@ from .serializers import InternshipSerializer, UpdateInternshipSerializer, Inter
 from core.models import User
 
 @extend_schema(tags=['Internships'])
-class ListInternshipView(generics.ListAPIView):
+class ListCreateInternshipView(generics.ListCreateAPIView):
     serializer_class = InternshipSerializer
     
     def get_queryset(self):

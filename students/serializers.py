@@ -19,7 +19,6 @@ class CreateStudentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        # fields = '__all__'
         exclude = ['is_active', 'is_staff', 'role', 'last_login']
         read_only_fields = ['id', 'created_at', 'updated_at']
         
