@@ -35,9 +35,10 @@ class CreateStudentSerializer(serializers.ModelSerializer):
         
         return user
     
-class ResumeSerializer(serializers.ModelSerializer):
+class StudentResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentResume
-        fields = '__all__'
+        fields = ['resume']
+        read_only_fields = ['id', 'student', 'uploaded_at']
 
     

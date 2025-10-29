@@ -179,6 +179,6 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3.S3Storage'
 
 SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
-# SUPABASE_ROOT_PATH = '/futaverse-media/'
+SUPABASE_BUCKET_NAME = os.environ.get('SUPABASE_BUCKET_NAME', 'futaverse-bucket')
 
 APPEND_SLASH=False 

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Internship, InternshipApplication, InternshipOffer, InternshipEngagement
+from .models import Internship, InternshipApplication, InternshipOffer, InternshipEngagement, ApplicationResume
 from students.models import StudentProfile, StudentResume
 from alumnus.models import AlumniProfile
 
@@ -46,37 +46,35 @@ class CreateInternshipOfferSerializer(serializers.ModelSerializer):
     
 class CreateInternshipApplicationSerializer(serializers.ModelSerializer):
     internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
+    resume = serializers.PrimaryKeyRelatedField(queryset=ApplicationResume.objects.all(), required=False, write_only=True)
     
     class Meta:
         model = InternshipApplication
-        fields = ['internship', 'id', 'cover_letter']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = ['internship', 'id', 'cover_letter', 'resume']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'student', 'status', 'created_at', 'updated_at', 'deleted_at', 'is_deleted']
         
-    def create(self, validated_data):
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        
         internship = validated_data['internship']
-        student = validated_data['student']
+        resume = validated_data.get('resume')
+        
+        student = self.context['request'].user.student_profile
+        require_resume = internship.require_resume
         
         if InternshipApplication.objects.filter(internship=internship, student=student).exists():
             raise serializers.ValidationError({"detail": "You have already applied for this internship."})
-
-        if internship.require_resume:
-            resume = getattr(student, 'resume', None)
-            if not resume:
-                raise serializers.ValidationError({
-                    "resume": "This internship requires a resume, but none was found. Please upload one first."
-                })
-            validated_data['resume'] = resume
-
-        return super().create(validated_data)
-    
-class InternshipApplicationSerializer(serializers.ModelSerializer):
-    # internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
-    # student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
-    
+        
+        if require_resume and not resume:
+            raise serializers.ValidationError({"detail": "You must upload a resume before applying for this internship."})
+        
+        return validated_data
+        
+class ApplicationResumeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = InternshipApplication
-        fields = "__all__"
-        read_only_fields = ['id', 'created_at', 'updated_at', 'deleted_at', 'is_deleted']
+        model = StudentResume
+        fields = ['resume']
+        read_only_fields = ['id', 'uploaded_at', 'application', 'student']
         
    
 

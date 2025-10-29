@@ -5,7 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 
 from core.models import User, OTP
-from .serializers import CreateStudentSerializer, ResumeSerializer
+from .serializers import CreateStudentSerializer, StudentResumeSerializer
 from .models import StudentResume
 
 from futaverse.views import PublicGenericAPIView
@@ -46,7 +46,7 @@ class CreateStudentView(generics.CreateAPIView, PublicGenericAPIView):
 @extend_schema(tags=['Students'])
 class UploadResumeView(generics.CreateAPIView):
     queryset = StudentResume.objects.all()
-    serializer_class = ResumeSerializer
+    serializer_class = StudentResumeSerializer
     parser_classes = [MultiPartParser, FormParser]
     
     def create(self, request, *args, **kwargs):

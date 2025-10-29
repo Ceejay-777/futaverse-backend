@@ -1,6 +1,6 @@
 from django.db import models
 from alumnus.models import AlumniProfile
-from students.models import StudentProfile, StudentResume
+from students.models import StudentProfile
 from futaverse.models import BaseModel
 
 class InternshipStatus(models.TextChoices):
@@ -9,7 +9,7 @@ class InternshipStatus(models.TextChoices):
         REJECTED = 'Rejected', 'rejected'
         WITHDRAWN = 'Withdrawn', 'withdrawn'
 
-class Internship(BaseModel, models.Model):
+class Internship(BaseModel):
     class WorkMode(models.TextChoices):
         REMOTE = 'Remote', 'Remote'
         HYBRID = 'Hybrid', 'Hybrid'
@@ -39,7 +39,6 @@ class Internship(BaseModel, models.Model):
     require_resume = models.BooleanField(default=True)
     require_cover_letter = models.BooleanField(default=False)
     
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def toggle_active(self):
@@ -49,16 +48,13 @@ class Internship(BaseModel, models.Model):
     def __str__(self):
         return f"{self.title} (internship)"
     
-class InternshipApplication(models.Model):
+class InternshipApplication(BaseModel):
     internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='applications')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internship_applications')
     
-    resume = models.ForeignKey(StudentResume, on_delete=models.SET_NULL, blank=True, null=True)
     cover_letter = models.TextField(blank=True, null=True)
     status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
-    responded_at = models.DateTimeField(null=True, blank=True)
     
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -67,14 +63,13 @@ class InternshipApplication(models.Model):
     def __str__(self):
         return f"Application of {self.student.full_name} for {self.internship.title}"
     
-class InternshipOffer(models.Model):
+class InternshipOffer(BaseModel):
     internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='offers')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internship_offers')
     
     status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
     responded_at = models.DateTimeField(null=True, blank=True)
     
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
@@ -95,7 +90,7 @@ class InternshipOffer(models.Model):
     def __str__(self):
         return f"Offer to {self.student.full_name} for {self.internship.title}"
     
-class InternshipEngagement(models.Model):
+class InternshipEngagement(BaseModel):
     class Source(models.TextChoices):
         APPLICATION = "application", "Application"
         OFFER = "offer", "Offer"
@@ -113,7 +108,6 @@ class InternshipEngagement(models.Model):
     source_id = models.PositiveIntegerField()
     status = models.CharField(choices=EngagementStatus.choices, max_length=20, default=EngagementStatus.ACTIVE)
     
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
@@ -133,4 +127,15 @@ class InternshipEngagement(models.Model):
 
     def __str__(self):
         return f"Engagement of {self.student.full_name} in {self.internship.title}"
+    
+class ApplicationResume(models.Model):
+    application = models.OneToOneField(InternshipApplication, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
+    student = models.ForeignKey(StudentProfile, on_delete=models.SET_NULL, related_name='application_resumes', null=True)
+    resume = models.URLField(max_length=200)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Resume of {self.application.student.full_name} for {self.application.internship.title}"
+    
+    
     

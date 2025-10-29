@@ -72,6 +72,12 @@ class LoginView(TokenObtainPairView, PublicGenericAPIView):
         if response.status_code == status.HTTP_200_OK:
             set_refresh_cookie(response)
             
+            user = User.objects.get(email=request.data.get("email"))
+            role = user.role
+            print(role)
+            
+            response.data["data"]["role"] = role
+            
         return response
 
 @extend_schema(tags=['Auth'])
@@ -130,10 +136,8 @@ class VerifyForgotPasswordOTPView(PublicGenericAPIView):
         
         access = AccessToken.for_user(serializer.user)
 
-        response = Response({"data": {"access_token": str(access)}, "detail": "Access granted to reset password", "status": "success"}, status=status.HTTP_200_OK,)
+        return Response({"data": {"access_token": str(access)}, "detail": "Access granted to reset password", "status": "success"}, status=status.HTTP_200_OK,)
 
-        return response
-  
 @extend_schema(tags=['Auth'])  
 class ResetPasswordView(GenericAPIView):
     serializer_class = ResetPasswordSerializer

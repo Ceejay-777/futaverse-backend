@@ -25,4 +25,4 @@ def upload_resume(file, student_id):
         
         return public_url
     except Exception as e:
-        return Response({"detail": str(e), "status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        raise Exception(f"File upload failed: {str(e)}")
