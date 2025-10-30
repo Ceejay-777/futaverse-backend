@@ -25,6 +25,7 @@ class CreateAlumnusSerializer(serializers.ModelSerializer):
         profile_data = validated_data.pop('alumni_profile')
         profile_img = profile_data.pop('profile_img', None)
         
+        validated_data['role'] = User.Role.ALUMNI
         user = super().create(validated_data)
         AlumniProfile.objects.create(user=user, **profile_data)
         

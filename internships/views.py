@@ -1,12 +1,14 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from rest_framework import viewsets, permissions, filters, generics, status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from drf_spectacular.utils import extend_schema
 
-from .models import Internship, InternshipApplication, InternshipOffer, ApplicationResume
+from .models import Internship, InternshipApplication, InternshipOffer, ApplicationResume, InternshipEngagement, InternshipStatus
 from .serializers import InternshipSerializer, UpdateInternshipSerializer, InternshipStatusSerializer, CreateInternshipOfferSerializer, CreateInternshipApplicationSerializer, ApplicationResumeSerializer
 
 from core.models import User
@@ -14,7 +16,6 @@ from core.models import User
 from futaverse.permissions import IsAuthenticatedAlumnus, IsAuthenticatedStudent
 from futaverse.utils.supabase import upload_file_to_supabase
 
-from students.models import StudentResume
 
 @extend_schema(tags=['Internships'])
 class ListCreateInternshipView(generics.ListCreateAPIView):
@@ -53,7 +54,7 @@ class CreateInternshipOfferView(generics.CreateAPIView):
 @extend_schema(tags=['Internships'])
 class ListInternshipOfferView(generics.ListAPIView):
     serializer_class = CreateInternshipOfferSerializer
-    permission_classes = [IsAuthenticatedAlumnus, IsAuthenticatedStudent]
+    permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
     
     def get_queryset(self):
         user = self.request.user
@@ -84,7 +85,7 @@ class CreateInternshipApplication(generics.CreateAPIView):
 @extend_schema(tags=['Internships'])
 class ListInternshipApplicationsView(generics.ListAPIView):
     serializer_class = CreateInternshipApplicationSerializer
-    permission_classes = [IsAuthenticatedAlumnus, IsAuthenticatedStudent]
+    permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
     
     def get_queryset(self):
         user = self.request.user
@@ -116,5 +117,70 @@ class UploadApplicationResumeView(generics.CreateAPIView):
         serializer.save(student=student)
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+@extend_schema(tags=['Internships'])
+class AcceptApplicationView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticatedAlumnus]
+    
+    def get_object(self):
+        application_id = self.kwargs.get('application_id')
+        if not application_id:
+            raise ValidationError({"detail": "Application ID is required."})
+        
+        return get_object_or_404(InternshipApplication.objects.filter(status=InternshipStatus.PENDING), pk=application_id)
+    
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        application = self.get_object()
+        
+        internship = application.internship
+        student = application.student
+        alumnus = internship.alumnus
+        
+        if internship.alumnus != request.user.alumni_profile:
+            return Response({"detail": "You are not authorized to manage this internship."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if InternshipEngagement.objects.filter(internship=internship, student=student).exists():
+            return Response({"detail": "This student is already engaged in this internship."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        engagement, created = InternshipEngagement.objects.get_or_create(
+            internship=internship,
+            student=student,
+            defaults={
+                "alumnus": alumnus,
+                "source": InternshipEngagement.Source.APPLICATION,
+                "source_id": application.id,
+            },
+        )
+        
+        if not created:
+            return Response({"detail": "This student is already engaged in this internship."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        
+        application.accept()
+        return Response({"detail": "Application accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
+    
+@extend_schema(tags=['Internships'])
+class RejectApplicationView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticatedAlumnus]
+    
+    def get_object(self):
+        application_id = self.kwargs.get('application_id')
+        if not application_id:
+            raise ValidationError({"detail": "Application ID is required."})
+        
+        return get_object_or_404(InternshipApplication.objects.filter(status=InternshipStatus.PENDING), pk=application_id)
+    
+    def post(self, request, *args, **kwargs):
+        application = self.get_object()
+        
+        internship = application.internship
+        
+        if internship.alumnus != request.user.alumni_profile:
+            return Response({"detail": "You are not authorized to manage this internship."}, status=status.HTTP_403_FORBIDDEN)
+        
+        application.reject()
+        
+        return Response({"detail": "Application rejected successfully."},status=status.HTTP_200_OK)
         
         

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import Internship, InternshipApplication, InternshipOffer, InternshipEngagement, ApplicationResume
-from students.models import StudentProfile, StudentResume
+from students.models import StudentProfile
 from alumnus.models import AlumniProfile
 
 from futaverse.serializers import StrictFieldsMixin
@@ -39,10 +39,11 @@ class CreateInternshipOfferSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
         
     def validate_internship(self, internship):
-        if not internship.is_active:
+        validated_intenrnship = super().validate_internship(internship)
+        if not validated_intenrnship.is_active:
             raise serializers.ValidationError("This internship is inactive. You cannot send new offers.")
         
-        return  internship
+        return  validated_intenrnship
     
 class CreateInternshipApplicationSerializer(serializers.ModelSerializer):
     internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
@@ -65,6 +66,9 @@ class CreateInternshipApplicationSerializer(serializers.ModelSerializer):
         if InternshipApplication.objects.filter(internship=internship, student=student).exists():
             raise serializers.ValidationError({"detail": "You have already applied for this internship."})
         
+        if internship.is_active is False:
+            raise serializers.ValidationError({"detail": "This internship is no longer active."})
+        
         if require_resume and not resume:
             raise serializers.ValidationError({"detail": "You must upload a resume before applying for this internship."})
         
@@ -72,9 +76,10 @@ class CreateInternshipApplicationSerializer(serializers.ModelSerializer):
         
 class ApplicationResumeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StudentResume
-        fields = ['resume']
+        model = ApplicationResume
+        fields = ['resume', 'id']
         read_only_fields = ['id', 'uploaded_at', 'application', 'student']
+        
         
    
 

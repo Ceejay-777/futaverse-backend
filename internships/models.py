@@ -2,6 +2,7 @@ from django.db import models
 from alumnus.models import AlumniProfile
 from students.models import StudentProfile
 from futaverse.models import BaseModel
+from django.utils import timezone
 
 class InternshipStatus(models.TextChoices):
         PENDING = 'Pending', 'pending'
@@ -55,10 +56,24 @@ class InternshipApplication(BaseModel):
     cover_letter = models.TextField(blank=True, null=True)
     status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
     
-    updated_at = models.DateTimeField(auto_now=True)
+    responded_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('internship', 'student')
+        
+    def withdraw(self):
+        self.status = InternshipStatus.WITHDRAWN
+        self.save(update_fields=['status'])
+      
+    def accept(self):
+        self.status = InternshipStatus.ACCEPTED
+        self.responded_at = timezone.now()
+        self.save(update_fields=['status', 'responded_at'])
+        
+    def reject(self):
+        self.status = InternshipStatus.REJECTED
+        self.responded_at = timezone.now()
+        self.save(update_fields=['status', 'responded_at'])
 
     def __str__(self):
         return f"Application of {self.student.full_name} for {self.internship.title}"
