@@ -85,7 +85,7 @@ class InternshipOffer(BaseModel):
     status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
     responded_at = models.DateTimeField(null=True, blank=True)
     
-    updated_at = models.DateTimeField(auto_now=True)
+    responded_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         unique_together = ("internship", "student")
@@ -96,11 +96,13 @@ class InternshipOffer(BaseModel):
         
     def accept(self):
         self.status = InternshipStatus.ACCEPTED
-        self.save(update_fields=['status'])
+        self.responded_at = timezone.now()
+        self.save(update_fields=['status', 'responded_at'])
         
     def reject(self):
         self.status = InternshipStatus.REJECTED
-        self.save(update_fields=['status'])
+        self.responded_at = timezone.now()
+        self.save(update_fields=['status', 'responded_at'])
 
     def __str__(self):
         return f"Offer to {self.student.full_name} for {self.internship.title}"
@@ -114,6 +116,7 @@ class InternshipEngagement(BaseModel):
         ACTIVE = "active", "Active"
         COMPLETED = "completed", "Completed"
         TERMINATED = "terminated", "Terminated"
+        ARCHIVED = "archived", "Archived"
         
     internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='engagements')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internship_engagements')

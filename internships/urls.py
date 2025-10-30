@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import ListCreateInternshipView, UpdateInternshipView, ToggleInternshipActiveView, CreateInternshipOfferView, ListInternshipOfferView, ListInternshipApplicationsView, CreateInternshipApplication, UploadApplicationResumeView, AcceptApplicationView, RejectApplicationView
+from .views import ListCreateInternshipView, UpdateInternshipView, ToggleInternshipActiveView, CreateInternshipOfferView, ListInternshipOfferView, ListInternshipApplicationsView, CreateInternshipApplication, UploadApplicationResumeView, AcceptApplicationView, RejectApplicationView, AcceptOfferView, RejectOfferView, ListEngagementsView
 
 urlpatterns = [
     path('', ListCreateInternshipView.as_view(), name='list-create-internships'),
@@ -13,5 +13,8 @@ urlpatterns = [
     path('/upload-resume', UploadApplicationResumeView.as_view(), name='upload-application-resume'),
     path('/applications/<int:application_id>/accept', AcceptApplicationView.as_view(), name='accept-internship-application'),
     path('/applications/<int:application_id>/reject', RejectApplicationView.as_view(), name='reject-internship-application'),
+    path('/offers/<int:offer_id>/accept', AcceptOfferView.as_view(), name='accept-internship-offer'),
+    path('/offers/<int:offer_id>/reject', RejectOfferView.as_view(), name='reject-internship-offer'),
+    path('/engagements', ListEngagementsView.as_view(), name='list-engagements'),
 ]
     

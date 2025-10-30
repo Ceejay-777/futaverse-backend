@@ -38,12 +38,18 @@ class CreateInternshipOfferSerializer(serializers.ModelSerializer):
         fields = ['internship', 'student', 'id']
         read_only_fields = ['id', 'created_at', 'updated_at']
         
-    def validate_internship(self, internship):
-        validated_intenrnship = super().validate_internship(internship)
-        if not validated_intenrnship.is_active:
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        internship = validated_data['internship']
+        student = validated_data['student']
+        
+        if not internship.is_active:
             raise serializers.ValidationError("This internship is inactive. You cannot send new offers.")
         
-        return  validated_intenrnship
+        if InternshipOffer.objects.filter(internship=internship, student=student).exists():
+            raise serializers.ValidationError({"detail": "You have already offered this internship."})
+        
+        return  validated_data
     
 class CreateInternshipApplicationSerializer(serializers.ModelSerializer):
     internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
@@ -63,11 +69,11 @@ class CreateInternshipApplicationSerializer(serializers.ModelSerializer):
         student = self.context['request'].user.student_profile
         require_resume = internship.require_resume
         
-        if InternshipApplication.objects.filter(internship=internship, student=student).exists():
-            raise serializers.ValidationError({"detail": "You have already applied for this internship."})
-        
         if internship.is_active is False:
             raise serializers.ValidationError({"detail": "This internship is no longer active."})
+        
+        if InternshipApplication.objects.filter(internship=internship, student=student).exists():
+            raise serializers.ValidationError({"detail": "You have already applied for this internship."})
         
         if require_resume and not resume:
             raise serializers.ValidationError({"detail": "You must upload a resume before applying for this internship."})
@@ -79,6 +85,12 @@ class ApplicationResumeSerializer(serializers.ModelSerializer):
         model = ApplicationResume
         fields = ['resume', 'id']
         read_only_fields = ['id', 'uploaded_at', 'application', 'student']
+        
+class InternshipEngagementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InternshipEngagement
+        exclude = ['deleted_at', 'is_deleted']
+        read_only_fields = ['id', 'created_at', 'updated_at']
         
         
    
