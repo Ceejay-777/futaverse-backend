@@ -8,8 +8,8 @@ from rest_framework.views import APIView
 
 from drf_spectacular.utils import extend_schema
 
-from .models import Mentorship, MentorshipOffer, MentorshipStatus, MentorshipEngagement, MentorshipApplication
-from .serializers import MentorshipSerializer, MentorshipOfferSerializer, MentorshipApplicationSerializer
+from .models import Mentorship, MentorshipOffer, MentorshipEngagement, MentorshipApplication
+from .serializers import MentorshipSerializer, MentorshipOfferSerializer, MentorshipApplicationSerializer, MentorshipStatusSerializer, MentorshipEngagementSerializer
 from .mixins import OfferValidationMixin, ApplicationValidationMixin
 from core.models import User
 
@@ -42,12 +42,23 @@ class RetrieveUpdateDestroyMentorshipView(generics.RetrieveUpdateDestroyAPIView)
     def perform_destroy(self, instance):
         instance.soft_delete()
         
-@extend_schema(tags=['Mentorships'], summary='Create a mentorship offer (alumnus)')
+@extend_schema(tags=['Mentorships'])
+class ToggleMentorshipActiveView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticatedAlumnus]
+    queryset = Mentorship.objects.all()
+    serializer_class = MentorshipStatusSerializer
+    http_method_names = ['patch']
+    
+    def perform_update(self, serializer):
+        mentorship = self.get_object()
+        mentorship.toggle_active()
+    
+@extend_schema(tags=['Mentorship Offers'], summary='Create a mentorship offer (alumnus)')
 class CreateMentorshipOfferView(generics.CreateAPIView):
     serializer_class = MentorshipOfferSerializer
     permission_classes = [IsAuthenticatedAlumnus]
     
-@extend_schema(tags=['Mentorships'], summary='List mentorship offers (alumnus and student)')
+@extend_schema(tags=['Mentorship Offers'], summary='List mentorship offers (alumnus and student)')
 class ListMentorshipOfferView(generics.ListAPIView):
     serializer_class = MentorshipOfferSerializer
     permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
@@ -63,7 +74,7 @@ class ListMentorshipOfferView(generics.ListAPIView):
         
         return MentorshipApplication.objects.none()
         
-@extend_schema(tags=['Mentorships'], summary='Retrieve a mentorship offer by id (alumnus and student)')
+@extend_schema(tags=['Mentorship Offers'], summary='Retrieve a mentorship offer by id (alumnus and student)')
 class RetrieveMentorshipOfferView(generics.RetrieveAPIView):
     serializer_class = MentorshipOfferSerializer
     permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
@@ -77,7 +88,7 @@ class RetrieveMentorshipOfferView(generics.RetrieveAPIView):
         elif user.role == User.Role.STUDENT:
             return MentorshipOffer.objects.filter(student=user.student_profile).select_related('mentorship', 'student')
         
-@extend_schema(tags=['Mentorships'], summary='Accept a mentorship offer (student)')
+@extend_schema(tags=['Mentorship Offers'], summary='Accept a mentorship offer (student)')
 class AcceptOfferView(OfferValidationMixin, APIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = None
@@ -108,7 +119,7 @@ class AcceptOfferView(OfferValidationMixin, APIView):
         mentorship.decrement_remaining_slots()
         return Response({"detail": "Offer accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
     
-@extend_schema(tags=['Mentorships'], summary='Reject a mentorship offer (student)')
+@extend_schema(tags=['Mentorship Offers'], summary='Reject a mentorship offer (student)')
 class RejectOfferView(OfferValidationMixin, APIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = None
@@ -123,7 +134,7 @@ class RejectOfferView(OfferValidationMixin, APIView):
         
         return Response({"detail": "Offer rejected successfully."},status=status.HTTP_200_OK)
     
-@extend_schema(tags=['Mentorships'], summary='Withdraw a mentorship offer (alumnus)')
+@extend_schema(tags=['Mentorship Offers'], summary='Withdraw a mentorship offer (alumnus)')
 class WithdrawOfferView(OfferValidationMixin,APIView):
     permission_classes = [IsAuthenticatedAlumnus]
     serializer_class = None
@@ -138,12 +149,12 @@ class WithdrawOfferView(OfferValidationMixin,APIView):
         
         return Response({"detail": "Offer withdrawn successfully."},status=status.HTTP_200_OK)
     
-@extend_schema(tags=['Mentorships'], summary='Apply for a mentorship (student)')
+@extend_schema(tags=['Mentorship Applications'], summary='Apply for a mentorship (student)')
 class CreateMentorshipApplicationView(generics.CreateAPIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = MentorshipApplicationSerializer
     
-@extend_schema(tags=['Mentorships'], summary='List mentorship applications (alumnus and student)')
+@extend_schema(tags=['Mentorship Applications'], summary='List mentorship applications (alumnus and student)')
 class ListMentorshipApplicationsView(generics.ListAPIView):
     permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
     serializer_class = MentorshipApplicationSerializer
@@ -159,7 +170,7 @@ class ListMentorshipApplicationsView(generics.ListAPIView):
         
         return MentorshipApplication.objects.none()
         
-@extend_schema(tags=['Mentorships'], summary='Retrieve a mentorship application by id (alumnus and student)')
+@extend_schema(tags=['Mentorship Applications'], summary='Retrieve a mentorship application by id (alumnus and student)')
 class RetrieveMentorshipApplicationView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
     serializer_class = MentorshipApplicationSerializer
@@ -175,7 +186,7 @@ class RetrieveMentorshipApplicationView(generics.RetrieveAPIView):
         
         return MentorshipApplication.objects.none()
     
-@extend_schema(tags=['Mentorships'], summary='Accept a mentorship application (alumnus)')
+@extend_schema(tags=['Mentorship Applications'], summary='Accept a mentorship application (alumnus)')
 class AcceptApplicationView(ApplicationValidationMixin, APIView):
     permission_classes = [IsAuthenticatedAlumnus]
     serializer_class = None
@@ -206,7 +217,7 @@ class AcceptApplicationView(ApplicationValidationMixin, APIView):
         mentorship.decrement_remaining_slots()
         return Response({"detail": "Application accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
     
-@extend_schema(tags=['Mentorships'], summary='Reject a mentorship application (alumnus)')
+@extend_schema(tags=['Mentorship Applications'], summary='Reject a mentorship application (alumnus)')
 class RejectApplicationView(ApplicationValidationMixin, APIView):
     permission_classes = [IsAuthenticatedAlumnus]
     serializer_class = None
@@ -223,7 +234,7 @@ class RejectApplicationView(ApplicationValidationMixin, APIView):
         
         return Response({"detail": "Application rejected successfully."},status=status.HTTP_200_OK)
     
-@extend_schema(tags=['Mentorships'], summary='Withdraw a mentorship application (student)')
+@extend_schema(tags=['Mentorship Applications'], summary='Withdraw a mentorship application (student)')
 class WithdrawApplicationView(ApplicationValidationMixin, APIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = None
@@ -237,3 +248,35 @@ class WithdrawApplicationView(ApplicationValidationMixin, APIView):
         application.withdraw()
         
         return Response({"detail": "Application withdrawn successfully."},status=status.HTTP_200_OK)
+    
+@extend_schema(tags=['Mentorship Engagements'], summary='List all mentorship engagements (alumnus and student)')
+class ListMentorshipEngagementsView(generics.ListAPIView):
+    permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
+    serializer_class = MentorshipEngagementSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        if user.role == User.Role.ALUMNI:
+            return MentorshipEngagement.objects.filter(alumnus=user.alumni_profile).select_related('mentorship', 'student', 'alumnus')
+        
+        elif user.role == User.Role.STUDENT:
+            return MentorshipEngagement.objects.filter(student=user.student_profile).select_related('mentorship', 'student')
+        
+        return MentorshipEngagement.objects.none()
+    
+@extend_schema(tags=['Mentorship Engagements'], summary='Retrieve a mentorship engagement by id (alumnus and student)')
+class RetrieveMentorshipEngagementView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
+    serializer_class = MentorshipEngagementSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        if user.role == User.Role.ALUMNI:
+            return MentorshipEngagement.objects.filter(alumnus=user.alumni_profile).select_related('mentorship', 'student', 'alumnus')
+        
+        elif user.role == User.Role.STUDENT:
+            return MentorshipEngagement.objects.filter(student=user.student_profile).select_related('mentorship', 'student')
+        
+        return MentorshipEngagement.objects.none()

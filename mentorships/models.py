@@ -48,6 +48,10 @@ class Mentorship(BaseModel):
             return self.remaining_slots
         return 0
     
+    def toggle_active(self):
+        self.is_active = not self.is_active
+        self.save(update_fields=['is_active'])
+    
 class MentorshipApplication(BaseModel):
     mentorship = models.ForeignKey(Mentorship, on_delete=models.CASCADE, related_name='applications')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='mentorship_applications')
@@ -147,8 +151,6 @@ class MentorshipEngagement(BaseModel):
     source = models.CharField(choices=Source.choices, max_length=20)
     source_id = models.PositiveIntegerField()
     status = models.CharField(choices=EngagementStatus.choices, max_length=20, default=EngagementStatus.ACTIVE)
-    
-    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         unique_together = ("mentorship", "student")
