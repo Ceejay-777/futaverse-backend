@@ -5,10 +5,10 @@ from futaverse.models import BaseModel
 from django.utils import timezone
 
 class InternshipStatus(models.TextChoices):
-        PENDING = 'Pending', 'pending'
-        ACCEPTED = 'Accepted', 'accepted'
-        REJECTED = 'Rejected', 'rejected'
-        WITHDRAWN = 'Withdrawn', 'withdrawn'
+        PENDING = 'pending', 'Pending'
+        ACCEPTED = 'accepted', 'Accepted'
+        REJECTED = 'rejected', 'Rejected'
+        WITHDRAWN = 'withdrawn', 'Withdrawn'
 
 class Internship(BaseModel):
     class WorkMode(models.TextChoices):
@@ -76,7 +76,7 @@ class InternshipApplication(BaseModel):
         self.save(update_fields=['status', 'responded_at'])
 
     def __str__(self):
-        return f"Application of {self.student.full_name} for {self.internship.title}"
+        return f"Application of {self.student.full_name} for {self.internship.title} (internship)"
     
 class InternshipOffer(BaseModel):
     internship = models.ForeignKey(Internship, on_delete=models.CASCADE, related_name='offers')
@@ -85,7 +85,7 @@ class InternshipOffer(BaseModel):
     status = models.CharField(choices=InternshipStatus.choices, max_length=20, default=InternshipStatus.PENDING)
     responded_at = models.DateTimeField(null=True, blank=True)
     
-    responded_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         unique_together = ("internship", "student")

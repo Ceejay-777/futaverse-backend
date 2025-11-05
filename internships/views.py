@@ -5,6 +5,7 @@ from rest_framework import viewsets, permissions, filters, generics, status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.views import APIView
 
 from drf_spectacular.utils import extend_schema
 
@@ -25,13 +26,20 @@ class ListCreateInternshipView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         return Internship.objects.filter(alumnus=user.alumni_profile).select_related('alumnus')
+    
+    def perform_create(self, serializer):
+        alumnus = self.request.user.alumni_profile
+        serializer.save(alumnus=alumnus)
 
 @extend_schema(tags=['Internships']) 
 class UpdateInternshipView(generics.UpdateAPIView):
-    queryset = Internship.objects.all()
     serializer_class = UpdateInternshipSerializer
     http_method_names = ['patch']
     permission_classes = [IsAuthenticatedAlumnus]
+    
+    def get_queryset(self):
+        user = self.request.user
+        return Internship.objects.filter(alumnus=user.alumni_profile).select_related('alumnus')
     
 @extend_schema(tags=['Internships'])
 class ToggleInternshipActiveView(generics.UpdateAPIView):
@@ -119,8 +127,9 @@ class UploadApplicationResumeView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 @extend_schema(tags=['Internships'])
-class AcceptApplicationView(generics.GenericAPIView):
+class AcceptApplicationView(APIView):
     permission_classes = [IsAuthenticatedAlumnus]
+    serializer_class = None
     
     def get_object(self):
         application_id = self.kwargs.get('application_id')
@@ -143,26 +152,21 @@ class AcceptApplicationView(generics.GenericAPIView):
         if InternshipEngagement.objects.filter(internship=internship, student=student).exists():
             return Response({"detail": "This student is already engaged in this internship."}, status=status.HTTP_400_BAD_REQUEST)
         
-        engagement, created = InternshipEngagement.objects.get_or_create(
+        engagement = InternshipEngagement.objects.create(
             internship=internship,
             student=student,
-            defaults={
-                "alumnus": alumnus,
-                "source": InternshipEngagement.Source.APPLICATION,
-                "source_id": application.id,
-            },
+            alumnus= alumnus,
+            source=InternshipEngagement.Source.APPLICATION,
+            source_id=application.id,
         )
-        
-        if not created:
-            return Response({"detail": "This student is already engaged in this internship."},
-                            status=status.HTTP_400_BAD_REQUEST)
         
         application.accept()
         return Response({"detail": "Application accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
     
 @extend_schema(tags=['Internships'])
-class RejectApplicationView(generics.GenericAPIView):
+class RejectApplicationView(APIView):
     permission_classes = [IsAuthenticatedAlumnus]
+    serializer_class = None
     
     def get_object(self):
         application_id = self.kwargs.get('application_id')
@@ -184,15 +188,21 @@ class RejectApplicationView(generics.GenericAPIView):
         return Response({"detail": "Application rejected successfully."},status=status.HTTP_200_OK)
     
 @extend_schema(tags=['Internships'])
-class AcceptOfferView(generics.GenericAPIView):
+class AcceptOfferView(APIView):
     permission_classes = [IsAuthenticatedStudent]
+    serializer_class = None
     
     def get_object(self):
         offer_id = self.kwargs.get('offer_id')
         if not offer_id:
             raise ValidationError({"detail": "Offer ID is required."})
         
-        return get_object_or_404(InternshipOffer.objects.filter(status=InternshipStatus.PENDING), pk=offer_id)
+        offer = get_object_or_404(InternshipOffer.objects.filter(status=InternshipStatus.PENDING).select_related('internship'), pk=offer_id)
+        
+        if not offer.internship.is_active:
+            raise ValidationError({"detail": "Internship is not active."})
+        
+        return offer
     
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -208,25 +218,21 @@ class AcceptOfferView(generics.GenericAPIView):
         if InternshipEngagement.objects.filter(internship=internship, student=student).exists():
             return Response({"detail": "You are already engaged in this internship."}, status=status.HTTP_400_BAD_REQUEST)
         
-        engagement, created = InternshipEngagement.objects.get_or_create(
+        engagement = InternshipEngagement.objects.create(
             internship=internship,
             student=student,
-            defaults={
-                "alumnus": alumnus,
-                "source": InternshipEngagement.Source.OFFER,
-                "source_id": offer.id,
-            },
+            alumnus= alumnus,
+            source= InternshipEngagement.Source.OFFER,
+            source_id= offer.id,
         )
-        
-        if not created:
-            return Response({"detail": "This student is already engaged in this internship."}, status=status.HTTP_400_BAD_REQUEST)
         
         offer.accept()
         return Response({"detail": "Application accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
     
 @extend_schema(tags=['Internships'])
-class RejectOfferView(generics.GenericAPIView):
+class RejectOfferView(APIView):
     permission_classes = [IsAuthenticatedStudent]
+    serializer_class = None
     
     def get_object(self):
         offer_id = self.kwargs.get('offer_id')
@@ -244,9 +250,11 @@ class RejectOfferView(generics.GenericAPIView):
         offer.reject()
         
         return Response({"detail": "Application rejected successfully."},status=status.HTTP_200_OK)
-    
-class WithdrawApplicationView(generics.GenericAPIView):
+
+@extend_schema(tags=['Internships'])
+class WithdrawApplicationView(APIView):
     permission_classes = [IsAuthenticatedStudent]
+    serializer_class = None
     
     def get_object(self):
         application_id = self.kwargs.get('application_id')
@@ -265,8 +273,10 @@ class WithdrawApplicationView(generics.GenericAPIView):
         
         return Response({"detail": "Application withdrawn successfully."},status=status.HTTP_200_OK)
     
-class WithdrawOfferView(generics.GenericAPIView):
+@extend_schema(tags=['Internships'])
+class WithdrawOfferView(APIView):
     permission_classes = [IsAuthenticatedAlumnus]
+    serializer_class = None
     
     def get_object(self):
         offer_id = self.kwargs.get('offer_id')
@@ -278,7 +288,7 @@ class WithdrawOfferView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         offer = self.get_object()
         
-        if offer.internship.alumnus != request.user.alumnus_profile:
+        if offer.internship.alumnus != request.user.alumni_profile:
             return Response({"detail": "You are not authorized to withdraw this application."}, status=status.HTTP_403_FORBIDDEN)
         
         offer.withdraw()

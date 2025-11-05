@@ -63,11 +63,11 @@ class LoginView(TokenObtainPairView, PublicGenericAPIView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         
-        # mailer.send(
-        #     subject="New Login Alert",
-        #     body = "There was a login attempt on your FutaVerse account. If this was you, you can ignore this message. \n\nIf this was not you, please contact our support team at ....................com \n\n\nFrom the Docuhealth Team",
-        #     recipient=request.data.get("email"),         
-        # )
+        mailer.send(
+            subject="New Login Alert",
+            body = "There was a login attempt on your FutaVerse account. If this was you, you can ignore this message. \n\nIf this was not you, please contact our support team at ....................com \n\n\nFrom the FutaVerse Team",
+            recipient=request.data.get("email"),         
+        )
         
         if response.status_code == status.HTTP_200_OK:
             set_refresh_cookie(response)

@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'alumnus',
     'students',
     'internships',
+    'mentorships',
 ]
 
 AUTH_USER_MODEL = "core.User"

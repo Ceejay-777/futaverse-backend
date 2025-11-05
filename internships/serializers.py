@@ -7,13 +7,12 @@ from alumnus.models import AlumniProfile
 from futaverse.serializers import StrictFieldsMixin
 
 class InternshipSerializer(serializers.ModelSerializer):
-    alumnus = serializers.PrimaryKeyRelatedField(queryset=AlumniProfile.objects.all())
     skills_required = serializers.ListField(child=serializers.CharField(), required=False)
     
     class Meta:
         model = Internship
         exclude = ['is_active', 'deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'alumnus']
         
 class UpdateInternshipSerializer(StrictFieldsMixin, serializers.ModelSerializer):
     skills_required = serializers.ListField(child=serializers.CharField(), required=False)
