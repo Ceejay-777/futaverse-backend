@@ -10,7 +10,7 @@ from drf_spectacular.utils import extend_schema
 
 from .models import Mentorship, MentorshipOffer, MentorshipStatus, MentorshipEngagement, MentorshipApplication
 from .serializers import MentorshipSerializer, MentorshipOfferSerializer, MentorshipApplicationSerializer
-from .mixins import OfferValidationMixin
+from .mixins import OfferValidationMixin, ApplicationValidationMixin
 from core.models import User
 
 from futaverse.permissions import IsAuthenticatedAlumnus, IsAuthenticatedStudent
@@ -117,7 +117,7 @@ class RejectOfferView(OfferValidationMixin, APIView):
         offer = self.get_offer()
         
         if offer.student != request.user.student_profile:
-            return Response({"detail": "You are not authorized to reject this mentorship."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "You are not authorized to reject this offer."}, status=status.HTTP_403_FORBIDDEN)
         
         offer.reject()
         
@@ -129,13 +129,10 @@ class WithdrawOfferView(OfferValidationMixin,APIView):
     serializer_class = None
     
     def post(self, request, *args, **kwargs):
-        offer = self.get_offer(withdraw=True)
+        offer = self.get_offer()
         
         if offer.mentorship.alumnus != request.user.alumni_profile:
-            return Response({"detail": "You are not authorized to withdraw this application."}, status=status.HTTP_403_FORBIDDEN)
-        
-        if offer.status != MentorshipStatus.PENDING:
-            raise ValidationError({"detail": "Only pending offers can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "You are not authorized to withdraw this offer."}, status=status.HTTP_403_FORBIDDEN)
         
         offer.withdraw()
         
@@ -162,7 +159,7 @@ class ListMentorshipApplicationsView(generics.ListAPIView):
         
         return MentorshipApplication.objects.none()
         
-@extend_schema(tags=['Mentorships'], summary='Retrieve a mentorship application (alumnus and student)')
+@extend_schema(tags=['Mentorships'], summary='Retrieve a mentorship application by id (alumnus and student)')
 class RetrieveMentorshipApplicationView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
     serializer_class = MentorshipApplicationSerializer
@@ -177,3 +174,66 @@ class RetrieveMentorshipApplicationView(generics.RetrieveAPIView):
             return MentorshipApplication.objects.filter(student=user.student_profile).select_related('mentorship', 'student')
         
         return MentorshipApplication.objects.none()
+    
+@extend_schema(tags=['Mentorships'], summary='Accept a mentorship application (alumnus)')
+class AcceptApplicationView(ApplicationValidationMixin, APIView):
+    permission_classes = [IsAuthenticatedAlumnus]
+    serializer_class = None
+    
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        application = self.get_application()
+        
+        mentorship = application.mentorship
+        student = application.student
+        alumnus = mentorship.alumnus
+        
+        if alumnus != request.user.alumni_profile:
+            return Response({"detail": "You are not authorized to accept this application."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if MentorshipEngagement.objects.filter(mentorship=mentorship, student=student).exists():
+            return Response({"detail": "This student is already engaged in this mentorship."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        engagement = MentorshipEngagement.objects.create(
+            mentorship=mentorship,
+            student=student,
+            alumnus= alumnus,
+            source=MentorshipEngagement.Source.APPLICATION,
+            source_id=application.id,
+        )
+        
+        application.accept()
+        mentorship.decrement_remaining_slots()
+        return Response({"detail": "Application accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
+    
+@extend_schema(tags=['Mentorships'], summary='Reject a mentorship application (alumnus)')
+class RejectApplicationView(ApplicationValidationMixin, APIView):
+    permission_classes = [IsAuthenticatedAlumnus]
+    serializer_class = None
+    
+    def post(self, request, *args, **kwargs):
+        application = self.get_application()
+        
+        mentorship = application.mentorship
+        
+        if mentorship.alumnus != request.user.alumni_profile:
+            return Response({"detail": "You are not authorized to reject this application."}, status=status.HTTP_403_FORBIDDEN)
+        
+        application.reject()
+        
+        return Response({"detail": "Application rejected successfully."},status=status.HTTP_200_OK)
+    
+@extend_schema(tags=['Mentorships'], summary='Withdraw a mentorship application (student)')
+class WithdrawApplicationView(ApplicationValidationMixin, APIView):
+    permission_classes = [IsAuthenticatedStudent]
+    serializer_class = None
+    
+    def post(self, request, *args, **kwargs):
+        application = self.get_application()
+        
+        if application.student != request.user.student_profile:
+            return Response({"detail": "You are not authorized to withdraw this application."}, status=status.HTTP_403_FORBIDDEN)
+        
+        application.withdraw()
+        
+        return Response({"detail": "Application withdrawn successfully."},status=status.HTTP_200_OK)

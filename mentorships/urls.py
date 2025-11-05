@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import ListCreateMentorshipView, RetrieveUpdateDestroyMentorshipView, CreateMentorshipOfferView, ListMentorshipOfferView, RetrieveMentorshipOfferView, AcceptOfferView, RejectOfferView, WithdrawOfferView, CreateMentorshipApplicationView, ListMentorshipApplicationsView, RetrieveMentorshipApplicationView
+from .views import ListCreateMentorshipView, RetrieveUpdateDestroyMentorshipView, CreateMentorshipOfferView, ListMentorshipOfferView, RetrieveMentorshipOfferView, AcceptOfferView, RejectOfferView, WithdrawOfferView, CreateMentorshipApplicationView, ListMentorshipApplicationsView, RetrieveMentorshipApplicationView, AcceptApplicationView, RejectApplicationView, WithdrawApplicationView
 
 urlpatterns = [
     path('', ListCreateMentorshipView.as_view(), name='list-create-mentorships'),
@@ -16,4 +16,7 @@ urlpatterns = [
     path('/application', CreateMentorshipApplicationView.as_view(), name='create-mentorship-application'),
     path('/applications', ListMentorshipApplicationsView.as_view(), name='list-mentorship-applications'),
     path('/applications/<int:pk>', RetrieveMentorshipApplicationView.as_view(), name='retrieve-mentorship-application'),
+    path('/applications/<int:application_id>/accept', AcceptApplicationView.as_view(), name='accept-mentorship-application'),
+    path('/applications/<int:application_id>/reject', RejectApplicationView.as_view(), name='reject-mentorship-application'),
+    path('/applications/<int:application_id>/withdraw', WithdrawApplicationView.as_view(), name='withdraw-mentorship-application'),
 ]
