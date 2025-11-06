@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 from .models import MentorshipOffer, MentorshipStatus, MentorshipApplication
 
 class OfferValidationMixin:
-    def get_offer(self, withdraw: bool = False) -> MentorshipOffer:
+    def get_offer(self) -> MentorshipOffer:
         offer_id = self.kwargs.get('offer_id')
         
         if not offer_id:

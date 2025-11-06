@@ -35,8 +35,11 @@ class Internship(BaseModel):
     end_date = models.DateField()
     is_paid = models.BooleanField(default=False)
     stipend = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    available_slots = models.PositiveIntegerField()
+    
+    available_slots = models.PositiveIntegerField(blank=True, null=True)
+    remaining_slots = models.PositiveIntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    
     require_resume = models.BooleanField(default=True)
     require_cover_letter = models.BooleanField(default=False)
     
@@ -45,6 +48,23 @@ class Internship(BaseModel):
     def toggle_active(self):
         self.is_active = not self.is_active
         self.save(update_fields=['is_active'])
+        
+    def decrement_remaining_slots(self):
+        if self.available_slots is None:
+            return 
+        
+        if self.remaining_slots > 0:
+            self.remaining_slots -= 1
+            self.save(update_fields=['remaining_slots'])
+            return self.remaining_slots
+        return 0
+    
+    def save(self, *args, **kwargs):
+        if self.available_slots is not None:
+            if self.remaining_slots is None:
+                self.remaining_slots = self.available_slots
+                
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.title} (internship)"

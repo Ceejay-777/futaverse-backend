@@ -3,7 +3,6 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import filters, generics, status
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 
 from drf_spectacular.utils import extend_schema
@@ -14,7 +13,6 @@ from .mixins import OfferValidationMixin, ApplicationValidationMixin
 from core.models import User
 
 from futaverse.permissions import IsAuthenticatedAlumnus, IsAuthenticatedStudent
-from futaverse.utils.supabase import upload_file_to_supabase
 
 @extend_schema(tags=['Mentorships'], summary='List (GET) and create (POST) mentorships (alumnus)')
 class ListCreateMentorshipView(generics.ListCreateAPIView):
@@ -42,7 +40,7 @@ class RetrieveUpdateDestroyMentorshipView(generics.RetrieveUpdateDestroyAPIView)
     def perform_destroy(self, instance):
         instance.soft_delete()
         
-@extend_schema(tags=['Mentorships'])
+@extend_schema(tags=['Mentorships'], summary='Toggle active status of a mentorship (alumnus)')
 class ToggleMentorshipActiveView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticatedAlumnus]
     queryset = Mentorship.objects.all()
@@ -72,7 +70,7 @@ class ListMentorshipOfferView(generics.ListAPIView):
         elif user.role == User.Role.STUDENT:
             return MentorshipOffer.objects.filter(student=user.student_profile).select_related('mentorship', 'student')
         
-        return MentorshipApplication.objects.none()
+        return MentorshipOffer.objects.none()
         
 @extend_schema(tags=['Mentorship Offers'], summary='Retrieve a mentorship offer by id (alumnus and student)')
 class RetrieveMentorshipOfferView(generics.RetrieveAPIView):
@@ -87,6 +85,8 @@ class RetrieveMentorshipOfferView(generics.RetrieveAPIView):
         
         elif user.role == User.Role.STUDENT:
             return MentorshipOffer.objects.filter(student=user.student_profile).select_related('mentorship', 'student')
+        
+        return MentorshipOffer.objects.none()
         
 @extend_schema(tags=['Mentorship Offers'], summary='Accept a mentorship offer (student)')
 class AcceptOfferView(OfferValidationMixin, APIView):
@@ -153,6 +153,10 @@ class WithdrawOfferView(OfferValidationMixin,APIView):
 class CreateMentorshipApplicationView(generics.CreateAPIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = MentorshipApplicationSerializer
+    
+    def perform_create(self, serializer):
+        student = self.request.user.student_profile
+        serializer.save(student=student)
     
 @extend_schema(tags=['Mentorship Applications'], summary='List mentorship applications (alumnus and student)')
 class ListMentorshipApplicationsView(generics.ListAPIView):

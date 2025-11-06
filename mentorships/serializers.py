@@ -22,6 +22,19 @@ class MentorshipOfferSerializer(serializers.ModelSerializer):
     mentorship = serializers.PrimaryKeyRelatedField(queryset=Mentorship.objects.all())
     student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
     
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        mentorship = validated_data['mentorship']
+        student = validated_data['student']
+        
+        if not mentorship.is_active:
+            raise serializers.ValidationError("This mentorship is inactive. You cannot send new offers.")
+        
+        if MentorshipOffer.objects.filter(mentorship=mentorship, student=student).exists():
+            raise serializers.ValidationError({"detail": "You have already offered this mentorship to this student."})
+        
+        return  validated_data
+    
     class Meta:
         model = MentorshipOffer
         exclude = ['deleted_at', 'is_deleted']
@@ -29,12 +42,11 @@ class MentorshipOfferSerializer(serializers.ModelSerializer):
         
 class MentorshipApplicationSerializer(serializers.ModelSerializer):
     mentorship = serializers.PrimaryKeyRelatedField(queryset=Mentorship.objects.all())
-    student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
     
     class Meta:
         model = MentorshipApplication
         exclude = ['deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'status', 'responded_at']
+        read_only_fields = ['id', 'created_at', 'status', 'responded_at', 'student']
         
 class MentorshipEngagementSerializer(serializers.ModelSerializer):
     class Meta:

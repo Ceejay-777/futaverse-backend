@@ -26,7 +26,7 @@ class Mentorship(BaseModel):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     
-    available_slots = models.PositiveIntegerField()
+    available_slots = models.PositiveIntegerField(blank=True, null=True)
     remaining_slots = models.PositiveIntegerField(blank=True, null=True)
     
     is_active = models.BooleanField(default=True)
@@ -36,9 +36,10 @@ class Mentorship(BaseModel):
         return f"{self.title} (mentorship)"
     
     def save(self, *args, **kwargs):
-        if self.remaining_slots is None:
-            self.remaining_slots = self.available_slots
-            
+        if self.available_slots is not None:
+            if self.remaining_slots is None:
+                self.remaining_slots = self.available_slots
+                
         super().save(*args, **kwargs)
     
     def decrement_remaining_slots(self):
