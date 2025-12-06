@@ -5,6 +5,7 @@ from core.models import User, UserProfileImage
 
 from .models import StudentResume
 
+
 class StudentProfileSerializer(serializers.ModelSerializer):
     skills = serializers.ListField(child=serializers.CharField(), required=False)
     profile_img = serializers.PrimaryKeyRelatedField(queryset=UserProfileImage.objects.all(), required=False)
@@ -12,6 +13,13 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         exclude = ['user']
+        
+class StudentInfoSerializer(serializers.ModelSerializer):
+    # profile_img = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = StudentProfile
+        fields = ['id', 'firstname', 'lastname', 'middlename', 'gender', 'phone_num', 'matric_no', 'department', 'faculty', 'level']        
 
 class CreateStudentSerializer(serializers.ModelSerializer):
     profile = StudentProfileSerializer(required=True, source='student_profile')

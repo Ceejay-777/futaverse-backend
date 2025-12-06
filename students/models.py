@@ -7,6 +7,8 @@ class LevelChoices(models.IntegerChoices):
     LEVEL_300 = 300, "300"
     LEVEL_400 = 400, "400"
     LEVEL_500 = 500, "500"
+    LEVEL_600 = 600, "600"
+    LEVEL_700 = 700, "700"
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student_profile")

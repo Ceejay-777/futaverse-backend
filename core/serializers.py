@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import UserProfileImage, User, OTP
-# from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 class UserProfileImageSerializer(serializers.ModelSerializer):
     url: str = serializers.SerializerMethodField(read_only=True)

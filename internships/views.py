@@ -24,7 +24,7 @@ class ListCreateInternshipView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        return Internship.objects.filter(alumnus=user.alumni_profile).select_related('alumnus')
+        return Internship.objects.filter(alumnus=user.alumni_profile).select_related('alumnus').order_by('-created_at')
     
     def perform_create(self, serializer):
         alumnus = self.request.user.alumni_profile
@@ -71,15 +71,15 @@ class ListInternshipOfferView(generics.ListAPIView):
         print(user)
         
         if user.role == User.Role.ALUMNI:
-            return InternshipOffer.objects.filter(internship__alumnus=user.alumni_profile).select_related('internship', 'student')
+            return InternshipOffer.objects.filter(internship__alumnus=user.alumni_profile).select_related('internship', 'student').order_by('-created_at')
         
         elif user.role == User.Role.STUDENT:
-            return InternshipOffer.objects.filter(student=user.student_profile).select_related('internship', 'student')
+            return InternshipOffer.objects.filter(student=user.student_profile).select_related('internship', 'student').order_by('-created_at')
         
         return InternshipOffer.objects.none()
     
 @extend_schema(tags=['Internship Offers'], summary='Retrieve an internship offer by id (alumnus and student)')
-class RetrieveinternshipOfferView(generics.RetrieveAPIView):
+class RetrieveInternshipOfferView(generics.RetrieveAPIView):
     serializer_class = InternshipOfferSerializer
     permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
     
@@ -95,7 +95,7 @@ class RetrieveinternshipOfferView(generics.RetrieveAPIView):
         return InternshipOffer.objects.none()
     
 @extend_schema(tags=['Internship Offers'], summary='Accept an internship offer (student)')
-class AcceptOfferView(OfferValidationMixin, APIView):
+class AcceptInternshipOfferView(OfferValidationMixin, APIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = None
     
@@ -126,7 +126,7 @@ class AcceptOfferView(OfferValidationMixin, APIView):
         return Response({"detail": "Offer accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
     
 @extend_schema(tags=['Internship Offers'], summary='Reject an internship offer (student)')
-class RejectOfferView(OfferValidationMixin, APIView):
+class RejectInternshipOfferView(OfferValidationMixin, APIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = None
     
@@ -141,7 +141,7 @@ class RejectOfferView(OfferValidationMixin, APIView):
         return Response({"detail": "Application rejected successfully."}, status=status.HTTP_200_OK)
     
 @extend_schema(tags=['Internship Offers'], summary='Withdraw an internship offer (alumnus)')
-class WithdrawOfferView(OfferValidationMixin, APIView):
+class WithdrawInternshipOfferView(OfferValidationMixin, APIView):
     permission_classes = [IsAuthenticatedAlumnus]
     serializer_class = None
     
@@ -181,10 +181,10 @@ class ListInternshipApplicationsView(generics.ListAPIView):
         user = self.request.user
         
         if user.role == User.Role.ALUMNI:
-            return InternshipApplication.objects.filter(internship__alumnus=user.alumni_profile).select_related('internship', 'student', 'resume')
+            return InternshipApplication.objects.filter(internship__alumnus=user.alumni_profile).select_related('internship', 'student', 'resume').order_by('-created_at')
         
         elif user.role == User.Role.STUDENT:
-            return InternshipApplication.objects.filter(student=user.student_profile).select_related('internship', 'resume', 'student')
+            return InternshipApplication.objects.filter(student=user.student_profile).select_related('internship', 'resume', 'student').order_by('-created_at')
         
         return InternshipApplication.objects.none()
     
@@ -227,7 +227,7 @@ class UploadApplicationResumeView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 @extend_schema(tags=['Internship Applications'], summary='Accept an internship application (alumnus)')
-class AcceptApplicationView(ApplicationValidationMixin, APIView):
+class AcceptInternshipApplicationView(ApplicationValidationMixin, APIView):
     permission_classes = [IsAuthenticatedAlumnus]
     serializer_class = None
     
@@ -258,7 +258,7 @@ class AcceptApplicationView(ApplicationValidationMixin, APIView):
         return Response({"detail": "Application accepted successfully.", "engagement_id": engagement.id},status=status.HTTP_201_CREATED)
     
 @extend_schema(tags=['Internship Applications'], summary='Reject an internship application (alumnus)')
-class RejectApplicationView(ApplicationValidationMixin, APIView):
+class RejectInternshipApplicationView(ApplicationValidationMixin, APIView):
     permission_classes = [IsAuthenticatedAlumnus]
     serializer_class = None
     
@@ -275,7 +275,7 @@ class RejectApplicationView(ApplicationValidationMixin, APIView):
         return Response({"detail": "Application rejected successfully."},status=status.HTTP_200_OK)
     
 @extend_schema(tags=['Internship Applications'], summary='Withdraw an internship application (student)')
-class WithdrawApplicationView(ApplicationValidationMixin, APIView):
+class WithdrawInternshipApplicationView(ApplicationValidationMixin, APIView):
     permission_classes = [IsAuthenticatedStudent]
     serializer_class = None
     
