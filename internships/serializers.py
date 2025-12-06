@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from .models import Internship, InternshipApplication, InternshipOffer, InternshipEngagement, ApplicationResume
 from students.models import StudentProfile
+from students.serializers import StudentProfileSerializer
 from alumnus.models import AlumniProfile
 
 from futaverse.serializers import StrictFieldsMixin
@@ -12,7 +13,7 @@ class InternshipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Internship
         exclude = ['is_active', 'deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'alumnus']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'alumnus', 'is_active']
         
 class InternshipStatusSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,12 +22,16 @@ class InternshipStatusSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
         
 class InternshipOfferSerializer(serializers.ModelSerializer):
-    internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all())
-    student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
+    internship = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all(), write_only=True)
+    internship_info = InternshipSerializer(source='internship', read_only=True)
+    
+    student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all(), write_only=True)
+    
+    
     
     class Meta:
         model = InternshipOffer
-        fields = ['internship', 'student', 'id']
+        fields = ['internship', 'student', 'id', 'internship_info']
         read_only_fields = ['id', 'created_at', 'updated_at']
         
     def validate(self, attrs):

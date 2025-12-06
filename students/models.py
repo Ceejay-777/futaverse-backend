@@ -11,6 +11,23 @@ class LevelChoices(models.IntegerChoices):
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student_profile")
     
+    class Gender(models.TextChoices):
+        MALE = 'male', 'Male'
+        FEMALE = 'female', 'Female'
+        OTHER = 'other', 'Other'
+        UNKNOWN = 'unknown', 'Unknown'
+        
+    phone_num = models.CharField()
+    gender = models.CharField(choices=Gender.choices)
+        
+    firstname = models.CharField(max_length=100)
+    lastname = models.CharField(max_length=100)
+    middlename = models.CharField(max_length=100, blank=True)
+    
+    address = models.CharField(max_length=255)
+    state = models.CharField(max_length=20)
+    country = models.CharField(max_length=20)
+    
     description = models.TextField(blank=True, null=True)
     
     matric_no = models.CharField(max_length=15, blank=True, null=True)
@@ -35,7 +52,7 @@ class StudentProfile(models.Model):
     
     @property
     def full_name(self):
-        return f"{self.user.firstname} {self.user.lastname}"
+        return f"{self.firstname} {self.lastname}"
     
     def __str__(self):
         return f"{self.full_name} (student)"

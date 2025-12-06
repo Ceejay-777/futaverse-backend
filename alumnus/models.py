@@ -2,7 +2,24 @@ from django.db import models
 from core.models import User
 
 class AlumniProfile(models.Model):
+    class Gender(models.TextChoices):
+        MALE = 'male', 'Male'
+        FEMALE = 'female', 'Female'
+        OTHER = 'other', 'Other'
+        UNKNOWN = 'unknown', 'Unknown'
+        
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="alumni_profile")
+    
+    phone_num = models.CharField()
+    gender = models.CharField(choices=Gender.choices)
+        
+    firstname = models.CharField(max_length=100)
+    lastname = models.CharField(max_length=100)
+    middlename = models.CharField(max_length=100, blank=True)
+    
+    address = models.CharField(max_length=255)
+    state = models.CharField(max_length=20)
+    country = models.CharField(max_length=20)
     
     description = models.TextField(blank=True, null=True)
     
@@ -25,4 +42,11 @@ class AlumniProfile(models.Model):
     x_url = models.URLField(blank=True, null=True, max_length=200)
     instagram_url = models.URLField(blank=True, null=True, max_length=200)
     facebook_url = models.URLField(blank=True, null=True, max_length=200)
+    
+    @property
+    def full_name(self):
+        return f"{self.firstname} {self.lastname}"
+    
+    def __str__(self):
+        return f"{self.full_name} (alumnus)"
     

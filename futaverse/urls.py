@@ -12,5 +12,6 @@ urlpatterns = [
     path('api/auth', include('core.urls')),
     path('api/internships', include('internships.urls')),
     path('api/mentorships', include('mentorships.urls')),
-    path('api/students', include('students.urls'))
+    path('api/students', include('students.urls')),
+    path('api/events', include('events.urls')),
 ]

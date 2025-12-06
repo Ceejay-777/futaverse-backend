@@ -37,24 +37,8 @@ class User(AbstractBaseUser):
         STAFF = 'Staff', 'staff'
         ADMIN = 'admin', 'Admin'
         
-    class Gender(models.TextChoices):
-        MALE = 'Male', 'male'
-        FEMALE = 'Female', 'female'
-        OTHER = 'Other', 'other'
-        UNKNOWN = 'Unknown', 'unknown'
-        
     email = models.EmailField(unique=True, blank=True, null=True)
-    phone_num = models.CharField()
     role = models.CharField(max_length=20, choices=Role.choices)
-    gender = models.CharField(choices=Gender.choices)
-        
-    firstname = models.CharField(max_length=100)
-    lastname = models.CharField(max_length=100)
-    middlename = models.CharField(max_length=100, blank=True)
-    
-    address = models.CharField(max_length=255)
-    state = models.CharField(max_length=20)
-    country = models.CharField(max_length=20)
     
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)

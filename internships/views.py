@@ -1,15 +1,14 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-from rest_framework import viewsets, permissions, filters, generics, status
+from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 
 from drf_spectacular.utils import extend_schema
 
-from .models import Internship, InternshipApplication, InternshipOffer, ApplicationResume, InternshipEngagement, InternshipStatus
+from .models import Internship, InternshipApplication, InternshipOffer, ApplicationResume, InternshipEngagement
 from .serializers import InternshipSerializer, InternshipStatusSerializer, InternshipOfferSerializer, InternshipApplicationSerializer, ApplicationResumeSerializer, InternshipEngagementSerializer
 from .mixins import OfferValidationMixin, ApplicationValidationMixin
 
@@ -35,7 +34,7 @@ class ListCreateInternshipView(generics.ListCreateAPIView):
 class RetrieveUpdateDestroyMentorshipView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = InternshipSerializer
     http_method_names = ['patch', 'get', 'delete']
-    permission_classes = [IsAuthenticatedAlumnus]
+    permission_classes = [IsAuthenticatedAlumnus | IsAuthenticatedStudent]
     
     def get_queryset(self):
         user = self.request.user
@@ -69,6 +68,7 @@ class ListInternshipOfferView(generics.ListAPIView):
     
     def get_queryset(self):
         user = self.request.user
+        print(user)
         
         if user.role == User.Role.ALUMNI:
             return InternshipOffer.objects.filter(internship__alumnus=user.alumni_profile).select_related('internship', 'student')
