@@ -1,5 +1,6 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 from django.shortcuts import redirect
@@ -58,12 +59,11 @@ def get_google_client_config():
     tags=['Google OAuth']
 )
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def google_auth_start(request):
     client_config = get_google_client_config()
     
     user_id = request.query_params.get("user_id")
-    if not user_id:
-        return Response({"detail": "user_id query parameter is required."}, status=400)
     
     user = User.objects.filter(id=user_id).first()
     if not user:
