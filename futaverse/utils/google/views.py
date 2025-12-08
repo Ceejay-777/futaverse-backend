@@ -96,6 +96,7 @@ def google_auth_start(request):
     tags=['Google OAuth']
 )
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def google_auth_callback(request):
     state = request.session.get("google_oauth_state")
     user_id = request.session.get("user_id")
