@@ -100,7 +100,7 @@ def google_auth_start(request):
 def google_auth_callback(request):
     state = request.session.get("google_oauth_state")
     user_id = request.session.get("user_id")
-    # redirect_after_auth = request.session.get("redirect_after_auth", None)
+    redirect_after_auth = request.session.get("redirect_after_auth", None)
 
     client_config = get_google_client_config()
     flow = Flow.from_client_config(client_config, scopes=GOOGLE_SCOPES, state=state, redirect_uri=google_redirect_uri)
@@ -118,7 +118,7 @@ def google_auth_callback(request):
         }
     )
 
-    # if redirect_after_auth:
-    #     return redirect(redirect_after_auth)
+    if redirect_after_auth:
+        return redirect(redirect_after_auth)
     
     return Response({"detail": "Authorization successful, you can exit this page."}, status=200)
