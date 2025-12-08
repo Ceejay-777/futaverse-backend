@@ -102,7 +102,7 @@ def google_auth_callback(request):
     user_id = request.session.get("user_id")
     # redirect_after_auth = request.session.get("redirect_after_auth", None)
 
-    client_config = get_google_client_config
+    client_config = get_google_client_config()
     flow = Flow.from_client_config(client_config, scopes=GOOGLE_SCOPES, state=state, redirect_uri=google_redirect_uri)
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     creds = flow.credentials
