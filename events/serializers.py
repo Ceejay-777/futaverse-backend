@@ -20,6 +20,8 @@ class EventSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         tickets_data = validated_data.pop('tickets', [])
+        mode = validated_data.get('mode')
+        
         event = super().create(validated_data)
         
         for ticket_data in tickets_data:

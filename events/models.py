@@ -8,7 +8,7 @@ import uuid
 from core.models import User
 
 from futaverse.models import BaseModel
-
+from decimal import Decimal
 
 class Event(BaseModel):
     class Mode(models.TextChoices):
@@ -91,11 +91,14 @@ class Ticket(BaseModel):
     
     @property
     def sales_price(self):
-        if self.discount_perc > 0:
-            discount_amount = (self.discount_perc / 100) * float(self.price)
-            return float(self.price) - discount_amount
-        
-        return float(self.price)
+        price = self.price
+        discount = self.discount_perc
+
+        if discount > 0:
+            discount_amount = (discount / Decimal("100")) * price
+            return price - discount_amount
+
+        return price
 
 class TicketPurchase(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="purchased_tickets")
