@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -20,6 +21,10 @@ GOOGLE_SCOPES = [
 ]
 
 google_redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+google_auth_uri = os.getenv("GOOGLE_AUTH_URI")
+
+def build_google_auth_url(user_id, redirect_after_auth=None):
+    return f"{google_auth_uri}?user_id={user_id}&redirect_after_auth={redirect_after_auth}"
 
 def get_google_client_config():
     return {"web": 
@@ -64,15 +69,12 @@ def google_auth_start(request):
     client_config = get_google_client_config()
     
     user_id = request.query_params.get("user_id")
-    
     user = User.objects.filter(id=user_id).first()
     if not user:
         return Response({"detail": "User with provided id not found."}, status=404)
 
     flow = Flow.from_client_config(client_config, scopes=GOOGLE_SCOPES, redirect_uri=google_redirect_uri)
     
-    print(flow)
-
     auth_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
@@ -102,6 +104,8 @@ def google_auth_callback(request):
     user_id = request.session.get("user_id")
     redirect_after_auth = request.session.get("redirect_after_auth", None)
     
+    print(redirect_after_auth)
+    
     # TODO: Handle errors
 
     client_config = get_google_client_config()
@@ -123,4 +127,4 @@ def google_auth_callback(request):
     if redirect_after_auth:
         return redirect(redirect_after_auth)
     
-    return Response({"detail": "Authorization successful, you can exit this page."}, status=200)
+    return Response({"detail": "Authorization successful, you can exit this page."}, status=status.HTTP_200_OK)

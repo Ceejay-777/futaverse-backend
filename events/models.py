@@ -49,9 +49,6 @@ class Event(BaseModel):
     #     max_length=20, choices=BOOST_CHOICES, default="none"
     # )
 
-    google_event_id = models.CharField(max_length=255, blank=True, null=True)
-    google_meet_link = models.URLField(blank=True, null=True)
-
     is_cancelled = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
 
@@ -114,3 +111,19 @@ class TicketPurchase(models.Model):
 
     def __str__(self):
         return f"{self.ticket_uid} - {self.ticket.name}"
+    
+class VirtualMeeting(BaseModel):
+    class Platform(models.TextChoices):
+        GOOGLE_MEET = 'meet', 'Google Meet'
+        JITSI = 'jitsi', 'Jitsi'
+        
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name='virtual_meeting')
+    platform = models.CharField(max_length=20, choices=Platform.choices)
+    
+    join_url = models.URLField(max_length=500)
+    
+    external_calendar_event_id = models.CharField(max_length=255, null=True, blank=True, help_text="The ID of the event in the provider's calendar (Google/Outlook)")
+    room_name = models.CharField(max_length=255, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.platform} meeting for {self.event.title}"
