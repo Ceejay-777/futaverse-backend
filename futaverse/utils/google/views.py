@@ -83,10 +83,15 @@ def google_auth_start(request):
         include_granted_scopes="true",
         prompt="consent"
     )
+    
+    redirect_after_auth = request.query_params.get("redirect_after_auth", None)
+    
+    if redirect_after_auth in [None, "", "None", "null"]:
+        redirect_after_auth = None
 
     request.session["google_oauth_state"] = state
     request.session["user_id"] = user_id
-    request.session["redirect_after_auth"] = request.query_params.get("redirect_after_auth", None)
+    request.session["redirect_after_auth"] = redirect_after_auth
 
     return redirect(auth_url)
 
