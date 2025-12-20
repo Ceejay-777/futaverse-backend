@@ -7,11 +7,14 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from django.shortcuts import redirect
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
+import logging
 
 from dotenv import load_dotenv
 import os
 
 from core.models import User
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -104,7 +107,7 @@ def google_auth_callback(request):
     user_id = request.session.get("user_id")
     redirect_after_auth = request.session.get("redirect_after_auth", None)
     
-    print(redirect_after_auth)
+    logger.debug(f"state: {state}, user_id: {user_id}, redirect_after_auth: {redirect_after_auth}")
     
     # TODO: Handle errors
 
