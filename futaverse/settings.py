@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'internships',
     'mentorships',
     'events',
+    'payments',
 ]
 
 AUTH_USER_MODEL = "core.User"
@@ -79,6 +80,7 @@ DATABASES = {
         'OPTIONS': {
             'sslmode': 'verify-full',
             'sslrootcert': os.path.join(BASE_DIR, 'root.crt'),
+            'connect_timeout': 10,
         }
     }
 }

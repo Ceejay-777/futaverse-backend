@@ -107,7 +107,7 @@ class Ticket(BaseModel):
 
 class TicketPurchase(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="purchased_tickets", null=True, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="purchases")
 
     ticket_uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)

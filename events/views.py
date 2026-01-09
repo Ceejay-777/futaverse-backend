@@ -1,18 +1,18 @@
 from django.db import transaction
 from django.db.models import F
-from django.template.loader import render_to_string
-from django.utils import timezone
 
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
 
 from drf_spectacular.utils import extend_schema
 
-from .serializers import EventSerializer, TicketSerializer, CreateTicketSerializer, TicketPurchaseSerializer
+from .serializers import EventSerializer, CreateTicketSerializer, TicketPurchaseSerializer
 from .models import Event, VirtualMeeting, Ticket, TicketPurchase
-from .utils import GoogleCalendarService, get_user_credentials, GoogleAuthRequired
+from .services import EventRegistrationService, GoogleCalendarService, get_user_credentials, GoogleAuthRequired
 
 from futaverse.utils.email_service import BrevoEmailService
+from payments.requests import initialize_transaction
 
 import uuid
 import logging
@@ -74,6 +74,20 @@ class CreateTicketView(generics.CreateAPIView):
 class CreateTicketPurchaseView(generics.CreateAPIView):
     serializer_class = TicketPurchaseSerializer
     
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        create_response = self.perform_create(serializer)
+        
+        if create_response:
+            return Response({
+                "checkout_url": create_response,
+                "message": "Payment required to complete registration"
+            }, status=status.HTTP_201_CREATED)
+            
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
     @transaction.atomic
     def perform_create(self, serializer):
         #TODO: Handle when action is not performed by user
@@ -86,8 +100,6 @@ class CreateTicketPurchaseView(generics.CreateAPIView):
         ticket_uid = uuid.uuid4().hex 
         
         is_free = ticket.sales_price == 0 or ticket.type == Ticket.Type.DEFAULT
-        is_virtual = event.mode == Event.Mode.VIRTUAL 
-        is_hybrid = event.mode == Event.Mode.HYBRID
         
         ticket_purchase = TicketPurchase.objects.create(user=user, ticket=ticket, is_paid=is_free, ticket_uid=ticket_uid, email=user.email)
              
@@ -95,61 +107,19 @@ class CreateTicketPurchaseView(generics.CreateAPIView):
             Ticket.objects.filter(id=ticket.id).update(quantity_sold=F('quantity_sold') + 1)
             
             if event.mode in [Event.Mode.VIRTUAL, Event.Mode.HYBRID]:
-                self.sync_to_calendar(event, user.email)
+                EventRegistrationService.sync_to_calendar(event)
                 
-            self.send_ticket_confirmation(ticket_purchase)
+            EventRegistrationService.send_ticket_email(ticket_purchase)
+            
+            return None
             
         else:
-            pass
-            # TODO: Generate QR code from uid  
-            # TODO: Generate Paystack reference and wait for payment. 
-            # TODO: Payment Verification (Paid Only): Confirm is_paid via Paystack Webhook.
+            authorization_url = initialize_transaction({
+                "amount": int(ticket.sales_price * 100), 
+                "email": user.email,
+                "reference": str(ticket_uid)
+            })
             
-    def sync_to_calendar(self, event, new_user_email):
-        try:
-            virtual_meeting = getattr(event, 'virtual_meeting', None)
-            if not virtual_meeting:
-                return
-
-            credentials = get_user_credentials(event.creator)
-            service = GoogleCalendarService(credentials)
-
-            all_emails = list(TicketPurchase.objects.filter(
-                ticket__event=event, 
-                is_paid=True
-            ).values_list('email', flat=True))
+            return authorization_url
             
-            if event.creator.email not in all_emails:
-                all_emails.append(event.creator.email)
-
-            service.add_attendee_to_event(
-                event_id=virtual_meeting.external_calendar_event_id,
-                new_attendee_emails=all_emails
-            )
             
-        except Exception as e:
-            logger.error(f"Calendar sync failed: {e}")
-            
-    def send_ticket_confirmation(self, ticket_purchase):
-        event: Event = ticket_purchase.ticket.event
-        user_name = ticket_purchase.user.get_full_name() if ticket_purchase.user else ticket_purchase.email 
-        join_url = getattr(event, 'virtual_meeting', None).join_url if hasattr(event, 'virtual_meeting') else None
-        
-        context = {
-            'user_name': user_name,
-            'event_title': event.title,
-            'event_date': event.date.strftime('%B %d, %Y at %H:%M %p'),
-            'event_location': "Virtual Meeting" if event.mode == "VIRTUAL" else event.venue, # TODO: Add location to event
-            'ticket_uid': str(ticket_purchase.ticket_uid),
-            'join_url': join_url
-        }
-        
-        html_body = render_to_string('emails/ticket_confirmation.html', context)
-        
-        mailer.send(
-            subject=f"Confirmation: Your Ticket for {event.title}",
-            body=html_body,
-            recipient=ticket_purchase.email,
-            is_html=True
-        )
-        
