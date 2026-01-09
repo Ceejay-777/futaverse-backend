@@ -1,6 +1,4 @@
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.exceptions import APIException
+from datetime import timedelta
 
 import logging
 from googleapiclient.discovery import build
@@ -13,17 +11,12 @@ from futaverse.utils.google.views import build_google_auth_url
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from google.auth.exceptions import RefreshError
 
 logger = logging.getLogger(__name__)
 
 class GoogleAuthRequired(Exception):
     def __init__(self, auth_url):
         self.auth_url = auth_url
-        
-class GoogleAuthRequiredException(APIException):
-    status_code = 401
-    default_detail = "Authenticate with Google"
         
 class GoogleCalendarService:
     def __init__(self, credentials):
@@ -35,11 +28,11 @@ class GoogleCalendarService:
             'summary': event.title,
             'description': f"Join Meeting: {manual_join_url}\n\n{event.description}" if manual_join_url else event.description,
             'start': {
-                'dateTime': event.start_time.isoformat(),
+                'dateTime': event.date.isoformat(),
                 'timeZone': settings.TIME_ZONE,
             },
             'end': {
-                'dateTime': event.end_time.isoformat(),
+                'dateTime': (event.date + timedelta(minutes=event.duration_mins)).isoformat(),
                 'timeZone': settings.TIME_ZONE,
             },
             'attendees': [{'email': email} for email in attendees_emails],
@@ -52,11 +45,11 @@ class GoogleCalendarService:
             },
             "conferenceData": {
                 'createRequest': {
-                    'requestId': f"req-{event.id}", # Must be unique
+                    'requestId': f"req-{event.id}", 
                     'conferenceSolutionKey': {'type': 'hangoutsMeet'}
+                    }
                 }
             }
-        }
 
         try:
             return self.service.events().insert(
@@ -69,6 +62,27 @@ class GoogleCalendarService:
         except HttpError as e:
             logger.error(f"Google Calendar Create Error: {e}")
             raise 
+        
+    def add_attendee_to_event(self, event_id, new_attendee_emails):
+        """
+        event_id: The external_calendar_event_id
+        new_attendee_emails: List of current + new attendee emails
+        """
+        try:
+            body = {
+                'attendees': [{'email': email} for email in new_attendee_emails]
+            }
+
+            return self.service.events().patch(
+                calendarId='primary',
+                eventId=event_id,
+                body=body,
+                sendUpdates='all'  
+            ).execute()
+            
+        except HttpError as e:
+            logger.error(f"Error patching calendar attendees: {e}")
+            return None
         
 def get_user_credentials(user: User, redirect_after_auth=None):
     creds_data = user.google_credentials

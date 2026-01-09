@@ -61,6 +61,10 @@ class Event(BaseModel):
         return self.title
     
 class Ticket(BaseModel):
+    class Type(models.TextChoices):
+        DEFAULT = "default", "Default"
+        CUSTOM = "custom", "Custom"
+        
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tickets")
 
     name = models.CharField(max_length=255) 
@@ -73,11 +77,15 @@ class Ticket(BaseModel):
         MinValueValidator(0),
         MaxValueValidator(100)
     ])
-    quantity = models.IntegerField(validators=[
-        MinValueValidator(0)
-    ])  
+    quantity = models.IntegerField(
+        null=True, 
+        blank=True, 
+        validators=[MinValueValidator(0)],
+        help_text="Leave blank for unlimited"
+    )
     quantity_sold = models.IntegerField(default=0)
 
+    type = models.CharField(max_length=20, choices=Type.choices, default=Type.CUSTOM)
     sales_start = models.DateTimeField(default=timezone.now)
     sales_end = models.DateTimeField(null=True, blank=True)
 
@@ -91,14 +99,15 @@ class Ticket(BaseModel):
         price = self.price
         discount = self.discount_perc
 
-        if discount > 0:
+        if discount and discount > 0:
             discount_amount = (discount / Decimal("100")) * price
             return price - discount_amount
 
         return price
 
-class TicketPurchase(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="purchased_tickets")
+class TicketPurchase(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="purchased_tickets", null=True, blank=True)
+    email = models.EmailField(unique=True)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="purchases")
 
     ticket_uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
