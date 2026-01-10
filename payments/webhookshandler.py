@@ -2,7 +2,7 @@ from django.db.models import F
 from django.db import transaction
 
 from events.models import Event, Ticket, TicketPurchase
-from events.services import EventRegistrationService
+from events.services import EventService
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -28,9 +28,9 @@ def handle_charge_success(data):
             Ticket.objects.filter(id=ticket.id).update(quantity_sold=F('quantity_sold') + 1)
         
         if event.mode in [Event.Mode.VIRTUAL, Event.Mode.HYBRID]:
-            EventRegistrationService.sync_to_calendar(event)
+            EventService.sync_to_calendar(event)
         
-        EventRegistrationService.send_ticket_email(ticket_purchase)
+        EventService.send_ticket_email(ticket_purchase)
                 
     except TicketPurchase.DoesNotExist:
         logger.error(f"Purchase not found for reference: {reference}")

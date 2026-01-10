@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema
 
 from .serializers import EventSerializer, CreateTicketSerializer, TicketPurchaseSerializer, UpdateEventSerializer
 from .models import Event, VirtualMeeting, Ticket, TicketPurchase
-from .services import EventRegistrationService, GoogleCalendarService, get_user_credentials, GoogleAuthRequired
+from .services import EventService, GoogleCalendarService, get_user_credentials, GoogleAuthRequired
 
 from futaverse.utils.email_service import BrevoEmailService
 from payments.requests import initialize_transaction
@@ -106,9 +106,9 @@ class CreateTicketPurchaseView(generics.CreateAPIView):
             Ticket.objects.filter(id=ticket.id).update(quantity_sold=F('quantity_sold') + 1)
             
             if event.mode in [Event.Mode.VIRTUAL, Event.Mode.HYBRID]:
-                EventRegistrationService.sync_to_calendar(event)
+                EventService.sync_to_calendar(event)
                 
-            EventRegistrationService.send_ticket_email(ticket_purchase)
+            EventService.send_ticket_email(ticket_purchase)
             
             return None
             
@@ -126,5 +126,40 @@ class UpdateEventView(generics.UpdateAPIView):
     serializer_class = UpdateEventSerializer
     queryset = Event.objects.all()
     lookup_field = 'sqid'
+    html_methods = ['patch']
+    
+    def perform_update(self, serializer):
+        instance: Event = self.get_object()
+        old_data = {
+            'date': instance.date.strftime('%B %d, %Y'),
+            'time': instance.start_time.strftime('%I:%M %p')
+        }
+        
+        validated_data: dict = serializer.validated_data
+        
+        time_fields = ['date', 'start_time', 'duration_mins']
+        time_changed = any(field in validated_data and validated_data[field] != getattr(instance, field) for field in time_fields)
+        
+        with transaction.atomic():
+            event = serializer.save()
+        
+        if hasattr(event, 'virtual_meeting'):
+            try:
+                user = self.request.user
+                redirect_after_auth = validated_data.get("redirect_after_auth", None)
+                
+                credentials = get_user_credentials(user, redirect_after_auth)
+                
+            except GoogleAuthRequired as e:
+                raise PermissionDenied({
+                    "detail": "Authenticate with Google",
+                    "error": "AUTH_REQUIRED",
+                    "auth_url": e.auth_url
+                })
             
-            
+            is_jitsi = event.virtual_meeting.platform == VirtualMeeting.Platform.JITSI           
+            service = GoogleCalendarService(credentials)
+            service.update_event_details(event, validated_data, manual_join_url=event.virtual_meeting.join_url if is_jitsi else None)
+        
+        if time_changed:
+            EventService.send_event_update_emails(event, old_data)

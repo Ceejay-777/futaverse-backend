@@ -36,7 +36,7 @@ class EventSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Event
-        exclude = ['is_deleted', 'deleted_at']
+        exclude = ['is_deleted', 'deleted_at', 'id']
         read_only_fields = ['sqid', 'created_at', 'updated_at', 'google_event_id', 'google_meet_link', 'is_cancelled', 'creator']
         
     def validate(self, attrs):
@@ -92,8 +92,10 @@ class TicketPurchaseSerializer(serializers.ModelSerializer):
         return validated_data
     
 class UpdateEventSerializer(serializers.ModelSerializer):
+    redirect_after_auth = serializers.URLField(required=False, write_only=True)
+    
     class Meta:
         model = Event
-        fields = ['title', 'description', 'date', 'start_time', 'duration_mins', 'venue', 'max_capacity', 'allow_sponsorship', 'allow_donations', 'is_published', 'is_cancelled']
+        fields = ['title', 'description', 'date', 'start_time', 'duration_mins', 'venue', 'max_capacity', 'allow_sponsorship', 'allow_donations', 'is_published', 'is_cancelled', 'redirect_after_auth']
         read_only_fields = ['sqid']
         

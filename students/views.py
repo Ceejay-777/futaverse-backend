@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from rest_framework import generics, status
 from drf_spectacular.utils import extend_schema
 
@@ -18,6 +20,7 @@ mailer = BrevoEmailService()
 class CreateStudentView(generics.CreateAPIView, PublicGenericAPIView):
     serializer_class = CreateStudentSerializer
     
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         
@@ -28,8 +31,9 @@ class CreateStudentView(generics.CreateAPIView, PublicGenericAPIView):
         return super().post(request, *args, **kwargs)
     
     def perform_create(self, serializer):
-        user = serializer.save()
-        otp = OTP.generate_otp(user)
+        with transaction.atomic():
+            user = serializer.save()
+            otp = OTP.generate_otp(user)
         
         mailer.send(
             subject="Verify your email",

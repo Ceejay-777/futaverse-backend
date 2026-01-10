@@ -11,7 +11,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = StudentProfile
-        exclude = ['user']
+        exclude = ['user', 'id', 'is_deleted', 'deleted_at']
         
 class StudentInfoSerializer(serializers.ModelSerializer):
     # profile_img = serializers.SerializerMethodField()
@@ -26,7 +26,7 @@ class CreateStudentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        exclude = ['is_active', 'is_staff', 'role', 'last_login']
+        exclude = ['is_active', 'is_staff', 'role', 'last_login', 'id']
         read_only_fields = ['sqid', 'created_at', 'updated_at']
         
     def create(self, validated_data):

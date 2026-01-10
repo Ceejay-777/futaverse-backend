@@ -19,7 +19,7 @@ from google.auth.transport.requests import Request
 logger = getLogger(__name__)
 mailer = BrevoEmailService()
 
-class EventRegistrationService:
+class EventService:
     @staticmethod
     def sync_to_calendar(event):
         try:
@@ -70,7 +70,32 @@ class EventRegistrationService:
             recipient=ticket_purchase.email,
             is_html=True
         )
+    
+    @staticmethod
+    def send_event_update_emails(event, old_data):
+        attendee_emails = list(TicketPurchase.objects.filter(ticket__event=event, is_paid=True).values_list('email', flat=True))
+
+        if not attendee_emails:
+            return
+
+        context = {
+            'event_title': event.title,
+            'old_date': old_data['date'],
+            'old_time': old_data['time'],
+            'new_date': event.date.strftime('%B %d, %Y'),
+            'new_time': event.start_time.strftime('%I:%M %p'),
+            'event_url': f"https://google.com" #TODO: Change later to actual event URL
+        }
         
+        html_body = render_to_string('emails/event_schedule_update.html', context)
+        
+        mailer.send_bulk(
+            subject=f"SCHEDULE UPDATE: {event.title}",
+            body=html_body,
+            recipients=attendee_emails, 
+            is_html=True
+        )
+    
 class GoogleAuthRequired(Exception):
     def __init__(self, auth_url):
         self.auth_url = auth_url
@@ -100,12 +125,12 @@ class GoogleCalendarService:
             # Tag the event with our database ID for easy searching later
             'extendedProperties': {
                 'private': {
-                    'app_event_id': str(event.id),
+                    'app_event_id': str(event.sqid),
                 }
             },
             "conferenceData": {
                 'createRequest': {
-                    'requestId': f"req-{event.id}", 
+                    'requestId': f"req-{event.sqid}", 
                     'conferenceSolutionKey': {'type': 'hangoutsMeet'}
                     }
                 }
@@ -143,6 +168,48 @@ class GoogleCalendarService:
         except HttpError as e:
             logger.error(f"Error patching calendar attendees: {e}")
             return None
+        
+    def update_event_details(self, event: Event, changes, manual_join_url=None):
+        body = {}
+        
+        date_fields = ['date', 'start_time', 'duration_mins']
+        time_changed = any(field in changes for field in date_fields)
+        
+        if time_changed:
+            new_date = changes.get('date', event.date)
+            new_time = changes.get('start_time', event.start_time)
+            new_duration = changes.get('duration_mins', event.duration_mins)
+            
+            start_dt = timezone.make_aware(datetime.combine(new_date, new_time))
+            end_dt = start_dt + timedelta(minutes=new_duration)
+            
+            body['start'] = {'dateTime': start_dt.isoformat(), 'timeZone': settings.TIME_ZONE}
+            body['end'] = {'dateTime': end_dt.isoformat(), 'timeZone': settings.TIME_ZONE}
+            
+        if 'title' in changes:
+            body['summary'] = changes['title']
+            
+        if 'description' in changes:
+            desc = changes['description']
+            body['description'] = f"Join Meeting: {manual_join_url}\n\n{desc}" if manual_join_url else desc
+            
+        if body == {}:
+            return None 
+        
+        try:
+            external_id = event.virtual_meeting.external_calendar_event_id
+            
+            return self.service.events().patch(
+                calendarId='primary',
+                eventId=external_id,
+                body=body,
+                conferenceDataVersion=1,
+                sendUpdates='all' 
+            ).execute()
+            
+        except HttpError as e:
+            logger.error(f"Google Calendar Update Error: {e}")
+            raise
         
 def get_user_credentials(user: User, redirect_after_auth=None):
     creds_data = user.google_credentials
