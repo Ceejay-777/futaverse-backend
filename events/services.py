@@ -146,7 +146,7 @@ class GoogleCalendarService:
         
 def get_user_credentials(user: User, redirect_after_auth=None):
     creds_data = user.google_credentials
-    google_auth_url = build_google_auth_url(user.id, redirect_after_auth)
+    google_auth_url = build_google_auth_url(user.sqid, redirect_after_auth)
     
     if not creds_data or not creds_data.get('token'):
         print("no creds")

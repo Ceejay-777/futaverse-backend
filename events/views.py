@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 class CreateEventView(generics.CreateAPIView):
     serializer_class = EventSerializer
     # permission_classes = []
-    # queryset = Event.objects.all()
     
     @transaction.atomic
     def perform_create(self, serializer):

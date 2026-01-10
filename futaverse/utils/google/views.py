@@ -121,7 +121,7 @@ def google_auth_callback(request):
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     creds = flow.credentials
 
-    User.objects.filter(id=user_id).update(
+    User.objects.filter(sqid=user_id).update(
         google_credentials={
             "token": creds.token,
             "refresh_token": creds.refresh_token,
