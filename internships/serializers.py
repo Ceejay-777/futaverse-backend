@@ -13,25 +13,25 @@ class InternshipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Internship
         exclude = ['is_active', 'deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'alumnus', 'is_active']
+        read_only_fields = ['sqid', 'created_at', 'updated_at', 'alumnus', 'is_active']
         
 class InternshipStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Internship
-        fields = ['id', 'is_active']
-        read_only_fields = ['id']
+        fields = ['sqid', 'is_active']
+        read_only_fields = ['sqid']
         
 class InternshipOfferSerializer(serializers.ModelSerializer):
-    internship_id = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all(), source='internship', write_only=True)
+    internship_id = serializers.SlugRelatedField(queryset=Internship.objects.all(), source='internship', write_only=True, slug_field='sqid')
     internship = InternshipSerializer( read_only=True)
     
-    student_id = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all(), source='student', write_only=True)
+    student_id = serializers.SlugRelatedField(queryset=StudentProfile.objects.all(), source='student', write_only=True, slug_field='sqid')
     student = StudentInfoSerializer(read_only=True)
     
     class Meta:
         model = InternshipOffer
-        fields = ['internship', 'student', 'id', 'internship_id', 'student_id']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = ['internship', 'student', 'internship_id', 'student_id']
+        read_only_fields = ['sqid', 'created_at', 'updated_at']
         
     def validate(self, attrs):
         validated_data = super().validate(attrs)
@@ -47,17 +47,17 @@ class InternshipOfferSerializer(serializers.ModelSerializer):
         return  validated_data
     
 class InternshipApplicationSerializer(serializers.ModelSerializer):
-    internship_id = serializers.PrimaryKeyRelatedField(queryset=Internship.objects.all(), source='internship', write_only=True)
+    internship_id = serializers.SlugRelatedField(queryset=Internship.objects.all(), source='internship', write_only=True, slug_field='sqid')
     internship = InternshipSerializer(read_only=True)
     
     student = StudentInfoSerializer(read_only=True)
     
-    resume = serializers.PrimaryKeyRelatedField(queryset=ApplicationResume.objects.all(), required=False, write_only=True)
+    resume = serializers.SlugRelatedField(queryset=ApplicationResume.objects.all(), required=False, write_only=True, slug_field='sqid')
     
     class Meta:
         model = InternshipApplication
-        fields = ['internship', 'id', 'cover_letter', 'resume', 'student', 'internship_id']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'student', 'status', 'created_at', 'updated_at', 'deleted_at', 'is_deleted']
+        fields = ['internship', 'sqid', 'cover_letter', 'resume', 'student', 'internship_id']
+        read_only_fields = ['sqid', 'created_at', 'updated_at', 'student', 'status', 'created_at', 'updated_at', 'deleted_at', 'is_deleted']
         
     def validate(self, attrs):
         validated_data = super().validate(attrs)
@@ -82,14 +82,14 @@ class InternshipApplicationSerializer(serializers.ModelSerializer):
 class ApplicationResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApplicationResume
-        fields = ['resume', 'id']
-        read_only_fields = ['id', 'uploaded_at', 'application', 'student']
+        fields = ['resume', 'sqid']
+        read_only_fields = ['sqid', 'uploaded_at', 'application', 'student']
         
 class InternshipEngagementSerializer(serializers.ModelSerializer):
     class Meta:
         model = InternshipEngagement
         exclude = ['deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['sqid', 'created_at', 'updated_at']
         
         
    

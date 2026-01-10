@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from drf_spectacular.utils import extend_schema
 
-from .serializers import EventSerializer, CreateTicketSerializer, TicketPurchaseSerializer
+from .serializers import EventSerializer, CreateTicketSerializer, TicketPurchaseSerializer, UpdateEventSerializer
 from .models import Event, VirtualMeeting, Ticket, TicketPurchase
 from .services import EventRegistrationService, GoogleCalendarService, get_user_credentials, GoogleAuthRequired
 
@@ -121,5 +121,11 @@ class CreateTicketPurchaseView(generics.CreateAPIView):
             })
             
             return authorization_url
+
+@extend_schema(tags=['Events'], summary="Update an event")     
+class UpdateEventView(generics.UpdateAPIView):
+    serializer_class = UpdateEventSerializer
+    queryset = Event.objects.all()
+    lookup_field = 'sqid'
             
             

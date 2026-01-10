@@ -1,11 +1,12 @@
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.utils import timezone
 
 from .models import TicketPurchase, Event
 from core.models import User
 
 from logging import getLogger
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from futaverse.utils.email_service import BrevoEmailService
 from futaverse.utils.google.views import build_google_auth_url
@@ -50,11 +51,12 @@ class EventRegistrationService:
         event: Event = ticket_purchase.ticket.event
         user_name = ticket_purchase.user.get_full_name() if ticket_purchase.user else ticket_purchase.email 
         join_url = getattr(event, 'virtual_meeting', None).join_url if hasattr(event, 'virtual_meeting') else None
+        start_datetime = timezone.make_aware(datetime.combine(event.date, event.start_time))
         
         context = {
             'user_name': user_name,
             'event_title': event.title,
-            'event_date': event.date.strftime('%B %d, %Y at %H:%M %p'),
+            'event_date': start_datetime.strftime('%B %d, %Y at %H:%M %p'),
             'event_location': "Virtual Meeting" if event.mode == "VIRTUAL" else event.venue, # TODO: Add location to event
             'ticket_uid': str(ticket_purchase.ticket_uid),
             'join_url': join_url
@@ -79,15 +81,18 @@ class GoogleCalendarService:
 
     def create_event(self, event: Event, attendees_emails, manual_join_url=None):
         
+        start_datetime = timezone.make_aware(datetime.combine(event.date, event.start_time))
+        end_datetime = start_datetime + timedelta(minutes=event.duration_mins)
+        
         body = {
             'summary': event.title,
             'description': f"Join Meeting: {manual_join_url}\n\n{event.description}" if manual_join_url else event.description,
             'start': {
-                'dateTime': event.date.isoformat(),
+                'dateTime': start_datetime.isoformat(),
                 'timeZone': settings.TIME_ZONE,
             },
             'end': {
-                'dateTime': (event.date + timedelta(minutes=event.duration_mins)).isoformat(),
+                'dateTime': end_datetime.isoformat(),
                 'timeZone': settings.TIME_ZONE,
             },
             'attendees': [{'email': email} for email in attendees_emails],

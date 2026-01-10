@@ -5,10 +5,9 @@ from core.models import User, UserProfileImage
 
 from .models import StudentResume
 
-
 class StudentProfileSerializer(serializers.ModelSerializer):
     skills = serializers.ListField(child=serializers.CharField(), required=False)
-    profile_img = serializers.PrimaryKeyRelatedField(queryset=UserProfileImage.objects.all(), required=False)
+    profile_img = serializers.SlugRelatedField(queryset=UserProfileImage.objects.all(), required=False, slug_field='sqid')
     
     class Meta:
         model = StudentProfile
@@ -19,7 +18,7 @@ class StudentInfoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = StudentProfile
-        fields = ['id', 'firstname', 'lastname', 'middlename', 'gender', 'phone_num', 'matric_no', 'department', 'faculty', 'level']        
+        fields = ['sqid', 'firstname', 'lastname', 'middlename', 'gender', 'phone_num', 'matric_no', 'department', 'faculty', 'level']        
 
 class CreateStudentSerializer(serializers.ModelSerializer):
     profile = StudentProfileSerializer(required=True, source='student_profile')
@@ -28,7 +27,7 @@ class CreateStudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['is_active', 'is_staff', 'role', 'last_login']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['sqid', 'created_at', 'updated_at']
         
     def create(self, validated_data):
         profile_data = validated_data.pop('student_profile')
@@ -48,6 +47,6 @@ class StudentResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentResume
         fields = ['resume']
-        read_only_fields = ['id', 'student', 'uploaded_at']
+        read_only_fields = ['sqid', 'student', 'uploaded_at']
 
     

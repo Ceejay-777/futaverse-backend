@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from rest_framework.serializers import ModelSerializer
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,7 +10,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = 'django-insecure-1&^(s=j&v^w$2o6^g-8nv@z!l)0!9cmt^be4jn5!oo$gcw89rq'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 DEBUG = True
 
@@ -143,10 +144,8 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'FutaVerse API Documentation',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    "TAGS": [
-        {"name": "Auth", "description": "Authentication endpoints"},
-        {"name": "Internships", "description": "Internship management"},
-        {"name": "Users", "description": "User management"},
+    'POSTPROCESSING_ALGORITHMS': [
+        'drf_spectacular.contrib.hashid_field.hashid_field_fix', 
     ],
 }
 

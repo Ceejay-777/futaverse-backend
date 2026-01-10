@@ -1,5 +1,6 @@
 from django.db import models
 from core.models import User
+from futaverse.models import BaseModel
 
 class LevelChoices(models.IntegerChoices):
     LEVEL_100 = 100, "100"
@@ -10,7 +11,7 @@ class LevelChoices(models.IntegerChoices):
     LEVEL_600 = 600, "600"
     LEVEL_700 = 700, "700"
 
-class StudentProfile(models.Model):
+class StudentProfile(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student_profile")
     
     class Gender(models.TextChoices):
@@ -59,7 +60,7 @@ class StudentProfile(models.Model):
     def __str__(self):
         return f"{self.full_name} (student)"
     
-class StudentResume(models.Model):
+class StudentResume(BaseModel):
     student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
     resume = models.URLField(max_length=200)
     uploaded_at = models.DateTimeField(auto_now_add=True)

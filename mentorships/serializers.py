@@ -10,17 +10,17 @@ class MentorshipSerializer(StrictFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Mentorship
         exclude = ['is_active', 'deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'alumnus', 'remaining_slots']
+        read_only_fields = ['sqid', 'created_at', 'updated_at', 'alumnus', 'remaining_slots']
         
 class MentorshipStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mentorship
-        fields = ['id', 'is_active']
-        read_only_fields = ['id']
+        fields = ['sqid', 'is_active']
+        read_only_fields = ['sqid']
         
 class MentorshipOfferSerializer(serializers.ModelSerializer):
-    mentorship = serializers.PrimaryKeyRelatedField(queryset=Mentorship.objects.all())
-    student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
+    mentorship = serializers.SlugRelatedField(queryset=Mentorship.objects.all(), slug_field='sqid')
+    student = serializers.SlugRelatedField(queryset=StudentProfile.objects.all(), slug_field='sqid')
     
     def validate(self, attrs):
         validated_data = super().validate(attrs)
@@ -38,18 +38,18 @@ class MentorshipOfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = MentorshipOffer
         exclude = ['deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'status', 'responded_at']
+        read_only_fields = ['sqid', 'created_at', 'status', 'responded_at']
         
 class MentorshipApplicationSerializer(serializers.ModelSerializer):
-    mentorship = serializers.PrimaryKeyRelatedField(queryset=Mentorship.objects.all())
+    mentorship = serializers.SlugRelatedField(queryset=Mentorship.objects.all(), slug_field='sqid')
     
     class Meta:
         model = MentorshipApplication
         exclude = ['deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at', 'status', 'responded_at', 'student']
+        read_only_fields = ['sqid', 'created_at', 'status', 'responded_at', 'student']
         
 class MentorshipEngagementSerializer(serializers.ModelSerializer):
     class Meta:
         model = MentorshipEngagement
         exclude = ['deleted_at', 'is_deleted']
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['sqid', 'created_at']

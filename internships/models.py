@@ -166,7 +166,7 @@ class InternshipEngagement(BaseModel):
     def __str__(self):
         return f"Engagement of {self.student.full_name} in {self.internship.title}"
     
-class ApplicationResume(models.Model):
+class ApplicationResume(BaseModel):
     application = models.OneToOneField(InternshipApplication, on_delete=models.CASCADE, related_name='resume', blank=True, null=True)
     student = models.ForeignKey(StudentProfile, on_delete=models.SET_NULL, related_name='application_resumes', null=True)
     resume = models.URLField(max_length=200)

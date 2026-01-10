@@ -5,7 +5,7 @@ from core.models import User, UserProfileImage
 
 class AlumniProfileSerializer(serializers.ModelSerializer):
     previous_comps = serializers.ListField(child=serializers.CharField(), required=False)
-    profile_img = serializers.PrimaryKeyRelatedField(queryset=UserProfileImage.objects.all(), required=False)
+    profile_img = serializers.SlugRelatedField(queryset=UserProfileImage.objects.all(), required=False, slug_field='sqid')
     
     class Meta:
         model = AlumniProfile
@@ -19,7 +19,7 @@ class CreateAlumnusSerializer(serializers.ModelSerializer):
         model = User
         # fields = '__all__'
         exclude = ['is_active', 'is_staff', 'role', 'last_login']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['sqid', 'created_at', 'updated_at']
         
     def create(self, validated_data):
         profile_data = validated_data.pop('alumni_profile')

@@ -1,7 +1,8 @@
 from django.db import models
 from core.models import User
+from futaverse.models import BaseModel
 
-class AlumniProfile(models.Model):
+class AlumniProfile(BaseModel):
     class Gender(models.TextChoices):
         MALE = 'male', 'Male'
         FEMALE = 'female', 'Female'

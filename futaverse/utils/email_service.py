@@ -23,8 +23,7 @@ class BrevoEmailService:
         email = SendSmtpEmail(**email_data)
         
         try:
-            response = self.api_instance.send_transac_email(email)
-            print(response)
+            self.api_instance.send_transac_email(email)
         
         except Exception as e:
             print(f"Email send failed: {e}")

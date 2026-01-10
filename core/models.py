@@ -2,9 +2,12 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils import timezone
 from datetime import timedelta
+from django_sqids import SqidsField
+
 from cloudinary.models import CloudinaryField
 
 from futaverse.utils.generate import generate_otp
+from futaverse.models import BaseModel
 
 def default_expiry():
     return timezone.now() + timedelta(minutes=10)
@@ -37,6 +40,7 @@ class User(AbstractBaseUser):
         STAFF = 'Staff', 'staff'
         ADMIN = 'admin', 'Admin'
         
+    sqid = SqidsField(real_field_name="id", min_length=7)
     email = models.EmailField(unique=True, blank=True, null=True)
     role = models.CharField(max_length=20, choices=Role.choices)
     
@@ -68,7 +72,7 @@ class User(AbstractBaseUser):
     def __str__(self):
         return f"{self.email} ({self.role})"
     
-class OTP(models.Model):
+class OTP(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="otp")
     otp = models.CharField(max_length=6)  
     expiry = models.DateTimeField(default=default_expiry)
@@ -110,7 +114,7 @@ class OTP(models.Model):
     def __str__(self):
         return self.otp
     
-class UserProfileImage(models.Model):
+class UserProfileImage(BaseModel):
     user = models.ForeignKey(User, related_name="profile_img", on_delete=models.SET_NULL, null=True, blank=True)
     image = CloudinaryField("profile_images/") 
     uploaded_at = models.DateTimeField(auto_now_add=True)

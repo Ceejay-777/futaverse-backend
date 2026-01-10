@@ -34,7 +34,8 @@ class Event(BaseModel):
     mode = models.CharField(max_length=20, choices=Mode.choices)
     
     venue = models.CharField(max_length=255, blank=True, null=True)
-    date = models.DateTimeField()
+    date = models.DateField()
+    start_time = models.TimeField()
     duration_mins = models.IntegerField(default=60, validators=[
         MinValueValidator(0)
     ])

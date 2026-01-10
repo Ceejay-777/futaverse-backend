@@ -1,12 +1,11 @@
 from rest_framework import serializers
 from .models import UserProfileImage, User, OTP
 
-
 class UserProfileImageSerializer(serializers.ModelSerializer):
     url: str = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = UserProfileImage
-        fields = ['id', 'image', 'url']
+        fields = ['sqid', 'image', 'url']
         
     def get_url(self, obj):
         return obj.image.url
