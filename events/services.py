@@ -1,8 +1,11 @@
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils import timezone
+from django.db import transaction
 
-from .models import TicketPurchase, Event
+from rest_framework.exceptions import PermissionDenied, ValidationError
+
+from .models import TicketPurchase, Event, VirtualMeeting
 from core.models import User
 
 from logging import getLogger
@@ -15,6 +18,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
+
+import uuid
 
 logger = getLogger(__name__)
 mailer = BrevoEmailService()
@@ -73,7 +78,7 @@ class EventService:
     
     @staticmethod
     def send_event_update_emails(event, old_data):
-        attendee_emails = list(TicketPurchase.objects.filter(ticket__event=event, is_paid=True).values_list('email', flat=True))
+        attendee_emails = list(TicketPurchase.objects.filter(ticket__event=event, is_paid=True).values_list('email', flat=True).distinct())
 
         if not attendee_emails:
             return
@@ -93,6 +98,99 @@ class EventService:
             subject=f"SCHEDULE UPDATE: {event.title}",
             body=html_body,
             recipients=attendee_emails, 
+            is_html=True
+        )
+        
+    @staticmethod
+    def reconcile_mode_change(event, old_mode, new_mode, user, platform=None, venue=None):
+        """
+        Handles the technical side effects of changing an event mode.
+        """
+        print()
+        if new_mode in [Event.Mode.VIRTUAL, Event.Mode.HYBRID]:
+            if not hasattr(event, 'virtual_meeting'):
+                try: 
+                    credentials = get_user_credentials(user) # TODO: Add redirect after auth
+                    service = GoogleCalendarService(credentials)
+                    
+                except GoogleAuthRequired as e:
+                    raise PermissionDenied({
+                        "detail": "Authenticate with Google",
+                        "error": "AUTH_REQUIRED",
+                        "auth_url": e.auth_url
+                    })
+                    
+                attendee_emails = list(TicketPurchase.objects.filter(ticket__event=event, is_paid=True).values_list('email', flat=True).distinct())
+                
+                if user.email not in attendee_emails:
+                    attendee_emails.append(user.email)
+                
+                if platform == VirtualMeeting.Platform.GOOGLE_MEET:
+                    room_name = None
+                    google_event = service.create_event(event, attendee_emails)
+                    join_url = google_event.get('hangoutLink')
+                    external_calendar_event_id = google_event.get('id')
+                    
+                if platform == VirtualMeeting.Platform.JITSI:
+                    room_name = f"App-{uuid.uuid4().hex}"
+                    join_url = f"https://meet.jit.si/{room_name}"
+                    google_event = service.create_event(event, attendee_emails, manual_join_url=join_url)
+                    external_calendar_event_id = google_event.get('id')
+                
+                try:
+                    with transaction.atomic():
+                        VirtualMeeting.objects.create(event=event, platform=platform, join_url=join_url, external_calendar_event_id=external_calendar_event_id, room_name=room_name)
+                except Exception as e:  
+                    service.delete_event(external_calendar_event_id)
+                    logger.error(f"Failed to save VirtualMeeting to DB. Google Event rolled back: {e}")
+                    raise
+
+        if new_mode == Event.Mode.PHYSICAL and hasattr(event, 'virtual_meeting'):
+            try:
+                try: 
+                    credentials = get_user_credentials(user) # TODO: Add redirect after auth
+                    service = GoogleCalendarService(credentials)
+                    
+                except GoogleAuthRequired as e:
+                    raise PermissionDenied({
+                        "detail": "Authenticate with Google",
+                        "error": "AUTH_REQUIRED",
+                        "auth_url": e.auth_url
+                    })
+                    
+                service.delete_event(event.virtual_meeting.external_calendar_event_id)
+            
+            except Exception as e:
+                logger.error(f"Failed to delete Google Event during mode switch: {e}")
+            
+            with transaction.atomic(): 
+                event.venue = venue
+                event.save(update_fields=['venue'])
+                event.virtual_meeting.delete()
+                
+    @staticmethod
+    def send_mode_change_email(event, old_mode, new_mode):
+        print("Sending mode change email...")
+        attendee_emails = list(TicketPurchase.objects.filter(ticket__event=event, is_paid=True).values_list('email', flat=True).distinct())
+
+        if not attendee_emails:
+            return
+
+        context = {
+            'event_title': event.title,
+            'old_mode': old_mode,
+            'new_mode': new_mode,
+            'venue': event.venue if event.venue else "TBA",
+            'platform': event.virtual_meeting.platform if hasattr(event, 'virtual_meeting') else "TBA",
+            'event_url': f"https://google.com" #TODO: Change later to actual event URL
+        }
+        
+        html_body = render_to_string('emails/event_mode_change.html', context)
+        
+        mailer.send_bulk(
+            subject=f"Format Change: {event.title}",
+            body=html_body,
+            recipients=attendee_emails,
             is_html=True
         )
     
@@ -209,6 +307,26 @@ class GoogleCalendarService:
             
         except HttpError as e:
             logger.error(f"Google Calendar Update Error: {e}")
+            raise
+        
+    def delete_event(self, event_id):
+        """
+        Deletes an event from the user's primary calendar.
+        """
+        try:
+            self.service.events().delete(
+                calendarId='primary',
+                eventId=event_id,
+                sendUpdates='all' 
+            ).execute()
+            return True
+        
+        except HttpError as e:
+            if e.resp.status == 404:
+                logger.warning(f"Google Event {event_id} already deleted or not found.") # Ensures the app doesn't crash if the is already deleted or doesn't exist
+                return True
+            
+            logger.error(f"Google Calendar Delete Error: {e}")
             raise
         
 def get_user_credentials(user: User, redirect_after_auth=None):
