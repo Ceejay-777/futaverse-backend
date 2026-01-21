@@ -130,6 +130,7 @@ class UpdateEventModeSerializer(serializers.ModelSerializer):
     mode = serializers.ChoiceField(choices=Event.Mode, required=True)
     venue = serializers.CharField(required=False)
     platform = serializers.ChoiceField(choices=VirtualMeeting.Platform, required=False)
+    
     class Meta:
         model = Event
         fields = ['mode', 'venue', 'platform']
