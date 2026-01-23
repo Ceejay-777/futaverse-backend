@@ -56,15 +56,15 @@ class User(AbstractBaseUser):
     
     objects = UserManager()
     
-    def get_profile(self, role):
-        if role == self.Role.ALUMNI:
+    def get_profile(self):
+        if self.role == self.Role.ALUMNI:
             return getattr(self, 'alumni_profile', None)
-        elif role == self.Role.STUDENT:
+        elif self.role == self.Role.STUDENT:
             return getattr(self, 'student_profile', None)
         return None
     
     def get_full_name(self):
-        profile = self.get_profile(self.role)
+        profile = self.get_profile()
         if profile:
             return f"{profile.firstname} {profile.lastname}"
         return self.email
