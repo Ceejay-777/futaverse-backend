@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from alumnus.serializers import AlumniInfoSerializer
+
 from .models import Internship, InternshipApplication, InternshipOffer, InternshipEngagement, ApplicationResume
 from students.models import StudentProfile
 from students.serializers import StudentProfileSerializer, StudentInfoSerializer
@@ -27,6 +29,8 @@ class InternshipOfferSerializer(serializers.ModelSerializer):
     
     student_id = serializers.SlugRelatedField(queryset=StudentProfile.objects.all(), source='student', write_only=True, slug_field='sqid')
     student = StudentInfoSerializer(read_only=True)
+    
+    alumnus_info = AlumniInfoSerializer(read_only=True, source='internship.alumnus')
     
     class Meta:
         model = InternshipOffer

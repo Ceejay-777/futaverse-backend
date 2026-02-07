@@ -119,7 +119,6 @@ class ForgotPasswordView(PublicGenericAPIView):
                         f"From the Docuhealth Team"
                     ),
             recipient=serializer.email,
-            from_email=None,
         )
         
         return Response({"detail": f"OTP sent successfully"}, status=status.HTTP_200_OK)

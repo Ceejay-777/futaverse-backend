@@ -10,7 +10,21 @@ class AlumniProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlumniProfile
         exclude = ['user']
+        
 
+class AlumniInfoSerializer(serializers.ModelSerializer):
+    # profile_img = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AlumniProfile
+        fields = ['sqid', 'firstname', 'lastname', 'middlename', 'gender', 'phone_num']
+        read_only_fields = ['sqid']
+        
+    # def get_profile_img(self, obj):
+    #     if obj.user.profile_img:
+    #         return obj.user.profile_img.sqid
+    #     return None 
+    
 class CreateAlumnusSerializer(serializers.ModelSerializer):
     profile = AlumniProfileSerializer(required=True, source='alumni_profile')
     password = serializers.CharField(write_only=True, required=True, min_length=8)
